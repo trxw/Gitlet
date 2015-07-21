@@ -1,6 +1,5 @@
 import java.util.*;
 import java.io.*;
-import java.io.File;
 import java.util.Arrays;
 import java.util.HashMap;
 
@@ -41,6 +40,7 @@ public class Gitlet {
 		SplitPoints = new ArrayList<Commit>();
 		Head = null;
 		io = new IOManagement(System.getProperty("user.dir"));
+		
 	}
 
 	static void init() {
@@ -80,19 +80,19 @@ public class Gitlet {
 	}
 
 	static void commit(String sArr[]) {
-
+		Gitlet G = new Gitlet();
 	}
 
 	static void find(String sArr[]) {
-
+		
 	}
 
 	static void rm(String sArr[]) {
-
+		
 	}
 
 	static void log() {
-
+		
 	}
 
 	static void global_log() {
@@ -100,7 +100,7 @@ public class Gitlet {
 	}
 
 	static void status() {
-
+	
 	}
 
 	static void branch(String sArr[]) {
@@ -108,21 +108,30 @@ public class Gitlet {
 	}
 
 	static void checkout(String sArr[]) {
-
+	
 	}
 
 	static void merge(String sArr[]) {
-
+	
 	}
 
 	static void rebase(String sArr[]) {
-
+		
 	}
 
+	@SuppressWarnings("unchecked")
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
 
-		
+		Gitlet G = new Gitlet();
+		//Deserialize
+		G.MessageToID = (HashMap<String,String>) G.io.deserialize("MessageToID");
+		G.BranchToCommitObj = (HashMap<String,Commit>) G.io.deserialize("BranchToCommitObj");
+		G.IdToCommitObj = (HashMap<String, Commit>) G.io.deserialize("IdToCommitObj");
+		G.SplitPoints = (ArrayList<Commit>) G.io.deserialize("SplitPoints");
+		G.markedForRM= (ArrayList<String>) G.io.deserialize("markedForRM");
+		G.markedForADD = (ArrayList<String>) G.io.deserialize("markedForADD");
+		G.Head = (Commit) G.io.deserialize("Head");
 		
 		int length = args.length;
 
@@ -145,36 +154,36 @@ public class Gitlet {
 
 		else if (length > 1) {
 			if (args[0].equals("add")) {
-				add(Arrays.copyOfRange(args, 1, length));
+				G.add(Arrays.copyOfRange(args, 1, length));
 
 			}
 
 			else if (args[0].equals("commit")) {
-				commit(Arrays.copyOfRange(args, 1, length));
+				G.commit(Arrays.copyOfRange(args, 1, length));
 			}
 
 			else if (args[0].equals("rm")) {
-				rm(Arrays.copyOfRange(args, 1, length));
+				G.rm(Arrays.copyOfRange(args, 1, length));
 			}
 
 			else if (args[0].equals("find")) {
-				find(Arrays.copyOfRange(args, 1, length));
+				G.find(Arrays.copyOfRange(args, 1, length));
 			}
 
 			else if (args[0].equals("checkout")) {
-				checkout(Arrays.copyOfRange(args, 1, length));
+				G.checkout(Arrays.copyOfRange(args, 1, length));
 			}
 
 			else if (args[0].equals("branch")) {
-				branch(Arrays.copyOfRange(args, 1, length));
+				G.branch(Arrays.copyOfRange(args, 1, length));
 			}
 
 			else if (args[0].equals("merge")) {
-				merge(Arrays.copyOfRange(args, 1, length));
+				G.merge(Arrays.copyOfRange(args, 1, length));
 			}
 
 			else if (args[0].equals("rebase")) {
-				rebase(Arrays.copyOfRange(args, 1, length));
+				G.rebase(Arrays.copyOfRange(args, 1, length));
 			}
 
 		}
