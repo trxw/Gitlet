@@ -1,16 +1,19 @@
 import java.util.*;
+import java.io.*;
 import java.io.File;
 import java.util.Arrays;
 import java.util.HashMap;
 
+import static java.nio.file.StandardCopyOption.*;
+
 public class Gitlet {
-	public static Commit Head; // keeps track of the most recent checked out
+	public Commit Head; // keeps track of the most recent checked out
 								// branch
-	public static ArrayList<Commit> SplitPoints; // keeps track of split nodes for reference
-	public static ArrayList<String> markedForRM; // array of all the files that have been marked
+	public ArrayList<Commit> SplitPoints; // keeps track of split nodes for reference
+	public ArrayList<String> markedForRM; // array of all the files that have been marked
 	                                                // for un-tracking since last commit
-	public static ArrayList<String> markedForADD;  // array of all file names to be added at next commit
-	
+	public ArrayList<String> markedForADD;  // array of all file names to be added at next commit
+	private IOManagement io;
 	/*
 	 * MessageToID uses the commit Message as KEY and the commit ID as its VALUE
 	 * it is used to keep track of the commit messages relative to to the commit
@@ -37,64 +40,43 @@ public class Gitlet {
 		IdToCommitObj = new HashMap<String, Commit>();
 		SplitPoints = new ArrayList<Commit>();
 		Head = null;
+		io = new IOManagement(System.getProperty("user.dir"));
 	}
 
 	static void init() {
-		File myfile = new File(System.getProperty("user.dir") + "/.gitlet");
-		if (!myfile.exists()) {
-			if (myfile.mkdir()) {
-				System.out.println("Directory is created!");
-				File myfile1 = new File(System.getProperty("user.dir")
-						+ "/.gitlet/CommitFiles"); // should committed files be out side gitlet?
-				myfile1.mkdir();
-				File myfile2 = new File(System.getProperty("user.dir")
-						+ "/.gitlet/Staging");
-				myfile2.mkdir();
-
-				File myfile3 = new File(System.getProperty("user.dir")
-						+ "/.gitlet/Staging");
-				myfile3.mkdir();
-
-				File myfile4 = new File(System.getProperty("user.dir")
-						+ "/.gitlet/Meta");
-				myfile4.mkdir(); // put all the the Serialize objects here!
-
-				Gitlet G = new Gitlet();
-				Commit firstCommit = new Commit();
-				firstCommit.Message = "initial commit.";
-				Head = firstCommit;
-				G.MessageToID.put(firstCommit.Message, firstCommit.ID);
-				G.BranchToCommitObj.put("Master", firstCommit);
-				G.IdToCommitObj.put(firstCommit.ID, firstCommit);
-
-				// we need to Serialize after all methods is executed
-
-			} else {
-				System.out
-						.println("A gitlet version control system already exists in the current directory.");
-			}
-		}
+		
+		Gitlet G = new Gitlet();
+		Commit firstCommit = new Commit();
+		firstCommit.Message = "initial commit.";
+		G.Head = firstCommit;
+		G.MessageToID.put(firstCommit.Message, firstCommit.ID);
+		G.BranchToCommitObj.put("Master", firstCommit);
+		G.IdToCommitObj.put(firstCommit.ID, firstCommit);
+         
+		// we need to Serialize after all methods is executed
 	}
 
-	static void add(String sArr[]) {
+	void add(String sArr[]) {
 		// deSerialize
 		/*
 		 * If the file had been marked for untracking (more on this in the
 		 * description of the rm command), then add just unmarks the file, and
-		 * does not also add it to the staging area.
+		 * also adds it to the staging area.
 		 */
+
+		
+		
 		File myfile= new File(System.getProperty("user.dir")+ sArr[0]);
-		if (!myfile.exists()){ // if file does not exist
-			System.out.println("File does not exist.");
-		}else if ( markedForRM.contains(sArr[0])){        
-			markedForADD.remove(sArr[0]);
-			// remove from the staging area... (no )
-			
-			
-		}else{
-			markedForADD.add(sArr[0]);
-			// add to staging area... (not sure! )
-		}
+			if (!myfile.exists()){ // if file does not exist
+				System.out.println("File does not exist.");
+			}else if ( markedForRM.contains(sArr[0]) ){        //HOW TO HANDLE MANY MARKED FILES HERE
+				markedForRM.remove(sArr[0]);
+				// remove from the staging area... (no )
+			}else{
+				markedForADD.add(sArr[0]);	
+				io.save(sArr[0], io.STAGEDIR);
+			}
+		
 	}
 
 	static void commit(String sArr[]) {
@@ -140,6 +122,8 @@ public class Gitlet {
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
 
+		
+		
 		int length = args.length;
 
 		if (length == 0) {

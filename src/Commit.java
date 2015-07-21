@@ -1,5 +1,6 @@
  import java.util.*; 
-	public class Commit {
+ import java.io.*;
+	public class Commit implements Serializable{
 		// commit must track its parents files not copy them...
 		// if the file is 
 		
