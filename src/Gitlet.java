@@ -43,7 +43,7 @@ public class Gitlet {
 		
 	}
 
-	static void init() {
+	 void init() {
 		
 		Gitlet G = new Gitlet();
 		Commit firstCommit = new Commit();
@@ -79,43 +79,42 @@ public class Gitlet {
 		
 	}
 
-	static void commit(String sArr[]) {
-		Gitlet G = new Gitlet();
+	 void commit(String sArr[]) {
 	}
 
-	static void find(String sArr[]) {
+	 void find(String sArr[]) {
 		
 	}
 
-	static void rm(String sArr[]) {
+	 void rm(String sArr[]) {
 		
 	}
 
-	static void log() {
+	 void log() {
 		
 	}
 
-	static void global_log() {
+	 void global_log() {
 
 	}
 
-	static void status() {
+	 void status() {
 	
 	}
 
-	static void branch(String sArr[]) {
+	 void branch(String sArr[]) {
 
 	}
 
-	static void checkout(String sArr[]) {
+	 void checkout(String sArr[]) {
 	
 	}
 
-	static void merge(String sArr[]) {
+	 void merge(String sArr[]) {
 	
 	}
 
-	static void rebase(String sArr[]) {
+	 void rebase(String sArr[]) {
 		
 	}
 
@@ -139,15 +138,15 @@ public class Gitlet {
 			System.out.println("Please enter a command.");
 		} else if (length == 1) {
 			if (args[0].equals("init")) {
-				init();
+				G.init();
 			} else if (args[0].equals("log")) {
-				log();
+				G.log();
 			}
 
 			else if (args[0].equals("global-log")) {
-				global_log();
+				G.global_log();
 			} else if (args[0].equals("status")) {
-				status();
+				G.status();
 			}
 
 		}
