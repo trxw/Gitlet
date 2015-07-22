@@ -34,6 +34,26 @@ public class Gitlet {
 	public HashMap<String, Commit> IdToCommitObj;
 
 	public Gitlet() {
+		/*
+
+		  // All Serializable objects should be stored in .gitlet folder
+			if (.gitlet is in folder ) {
+
+				return ; 
+			}else{	
+				File f = null; 
+				try {
+					f = new ("/Users/ ..../.gitlet"); 
+					f.mkdire(); 
+	
+				}catch (Exception e){
+					e.printStackTrace(); 
+				}
+
+			}
+
+		*/
+
 		MessageToID = new HashMap<String, String>();
 		BranchToCommitObj = new HashMap<String, Commit>();
 		IdToCommitObj = new HashMap<String, Commit>();
