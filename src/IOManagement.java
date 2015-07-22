@@ -1,5 +1,4 @@
 import java.io.*;
-import java.io.File;
 import java.nio.file.Files;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -29,16 +28,16 @@ public class IOManagement {
 		if (!myfile.exists()) {
 			if (myfile.mkdir()) {
 				System.out.println("Directory is created!");
-				File myfile1 = new File(mainDir
+				File myfile1 = new File(mainDir + GITLETDIR 
 						+ COMMITDIR); // should committed files be out side gitlet? NO
 				myfile1.mkdir();
-				File myfile2 = new File(mainDir+COMMITDIR);
+				File myfile2 = new File(mainDir+ GITLETDIR +COMMITDIR);
 				myfile2.mkdir();
 
-				File myfile3 = new File(mainDir+STAGEDIR);
+				File myfile3 = new File(mainDir+ GITLETDIR +STAGEDIR);
 				myfile3.mkdir();
 
-				File myfile4 = new File(mainDir+METADIR);
+				File myfile4 = new File(mainDir+ GITLETDIR +METADIR);
 				myfile4.mkdir(); // put all the the Serialize objects here!
 
 
@@ -103,17 +102,19 @@ public class IOManagement {
 	 * 
 	 * 
 	 */
-	public boolean serialize( Object obj, String fileName){
+	public void serialize( Object obj, String fileName){
 		try( ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(currentDir+METADIR+"/"+fileName)) )
 	      {
 	         
 	         out.writeObject(obj);
 	         System.out.printf("Serialized data is saved.");
-	         return true;
+	         
 	      }catch(IOException i)
 	      {
-	          i.printStackTrace();
-	          return false;
+	    	  i.printStackTrace();
+	    	  throw new IllegalStateException();
+	         
+	          
 	      }
 	}
 	

@@ -64,20 +64,35 @@ public class Gitlet {
 	}
 
 	 void init() {
-		
-		Gitlet G = new Gitlet();
-		Commit firstCommit = new Commit();
-		firstCommit.Message = "initial commit.";
-		G.Head = firstCommit;
-		G.MessageToID.put(firstCommit.Message, firstCommit.ID);
-		G.BranchToCommitObj.put("Master", firstCommit);
-		G.IdToCommitObj.put(firstCommit.ID, firstCommit);
-         
+			String Message = "initial commit.";
+		Commit firstCommit = new Commit(Message,null);
+		this.Head = firstCommit;
+		this.MessageToID.put(firstCommit.Message, firstCommit.ID);
+		this.BranchToCommitObj.put("Master", firstCommit);
+		this.IdToCommitObj.put(firstCommit.ID, firstCommit);
 		// we need to Serialize after all methods is executed
+		this.serialize();
+		
+	}
+	 
+	boolean serialize(){
+		try{
+		this.io.serialize(this.MessageToID, "MessageToID");
+		this.io.serialize(this.BranchToCommitObj, "BranchToCommitObj");
+		this.io.serialize(this.IdToCommitObj, "IdToCommitObj");
+		this.io.serialize(this.SplitPoints, "SplitPoints");
+		this.io.serialize(this.markedForRM, "markedForRM");
+		this.io.serialize(this.markedForADD, "markedForADD");
+		this.io.serialize(this.Head, "Head");
+		return true;
+		}catch(IllegalStateException e){
+			return false;
+		}
+		
 	}
 
 	void add(String sArr[]) {
-		// deSerialize
+		
 		/*
 		 * If the file had been marked for untracking (more on this in the
 		 * description of the rm command), then add just unmarks the file, and
@@ -95,11 +110,18 @@ public class Gitlet {
 			}else{
 				markedForADD.add(sArr[0]);	
 				io.save(sArr[0], io.STAGEDIR);
+				this.serialize();
 			}
 		
 	}
 
 	 void commit(String sArr[]) {
+//		 this.io.save(sArr[], targetDir)
+		 if (this.markedForADD.isEmpty() && this.markedForRM.isEmpty() ){
+			 System.out.println("No changes added to the commit.");
+		 }
+		
+		 
 	}
 
 	 void find(String sArr[]) {
@@ -167,6 +189,9 @@ public class Gitlet {
 				G.global_log();
 			} else if (args[0].equals("status")) {
 				G.status();
+			}
+			else if (args[0].equals("commit")) {
+				System.out.println("Please enter a commit message.");
 			}
 
 		}
