@@ -6,19 +6,23 @@ import java.util.HashMap;
 import static java.nio.file.StandardCopyOption.*;
 
 public class Gitlet {
+
 	public Commit Head; // keeps track of the most recent checked out
-								// branch
-	public ArrayList<Commit> SplitPoints; // keeps track of split nodes for reference
-	public ArrayList<String> markedForRM; // array of all the files that have been marked
-	                                                // for un-tracking since last commit
-	public ArrayList<String> markedForADD;  // array of all file names to be added at next commit
+						// branch
+	public ArrayList<Commit> SplitPoints; // keeps track of split nodes for
+											// reference
+	public ArrayList<String> markedForRM; // array of all the files that have
+											// been marked
+											// for un-tracking since last commit
+	public ArrayList<String> markedForADD; // array of all file names to be
+											// added at next commit
 	private IOManagement io;
 	/*
 	 * MessageToID uses the commit Message as KEY and the commit ID as its VALUE
 	 * it is used to keep track of the commit messages relative to to the commit
 	 * ID it will be used to execute the log method
 	 */
-	public HashMap<String,String> MessageToID;
+	public HashMap<String, String> MessageToID;
 
 	/*
 	 * BranchToCommitObj uses the Branch-name (user supplied except for
@@ -34,25 +38,6 @@ public class Gitlet {
 	public HashMap<String, Commit> IdToCommitObj;
 
 	public Gitlet() {
-		/*
-
-		  // All Serializable objects should be stored in .gitlet folder
-			if (.gitlet is in folder ) {
-
-				return ; 
-			}else{	
-				File f = null; 
-				try {
-					f = new ("/Users/ ..../.gitlet"); 
-					f.mkdire(); 
-	
-				}catch (Exception e){
-					e.printStackTrace(); 
-				}
-
-			}
-
-		*/
 
 		MessageToID = new HashMap<String, String>();
 		BranchToCommitObj = new HashMap<String, Commit>();
@@ -60,104 +45,136 @@ public class Gitlet {
 		SplitPoints = new ArrayList<Commit>();
 		Head = null;
 		io = new IOManagement(System.getProperty("user.dir"));
-		
+
 	}
 
-	 void init() {
-			String Message = "initial commit.";
-		Commit firstCommit = new Commit(Message,null);
+	void init() {
+		String Message = "initial commit.";
+		Commit firstCommit = new Commit(Message, null, "Master");
 		this.Head = firstCommit;
 		this.MessageToID.put(firstCommit.Message, firstCommit.ID);
-		this.BranchToCommitObj.put("Master", firstCommit);
+		this.BranchToCommitObj.put(firstCommit.myBranch, firstCommit);
 		this.IdToCommitObj.put(firstCommit.ID, firstCommit);
+
 		// we need to Serialize after all methods is executed
 		this.serialize();
-		
+
 	}
-	 
-	boolean serialize(){
-		try{
-		this.io.serialize(this.MessageToID, "MessageToID");
-		this.io.serialize(this.BranchToCommitObj, "BranchToCommitObj");
-		this.io.serialize(this.IdToCommitObj, "IdToCommitObj");
-		this.io.serialize(this.SplitPoints, "SplitPoints");
-		this.io.serialize(this.markedForRM, "markedForRM");
-		this.io.serialize(this.markedForADD, "markedForADD");
-		this.io.serialize(this.Head, "Head");
-		return true;
-		}catch(IllegalStateException e){
+
+	boolean serialize() {
+		try {
+			this.io.serialize(this.MessageToID, "MessageToID");
+			this.io.serialize(this.BranchToCommitObj, "BranchToCommitObj");
+			this.io.serialize(this.IdToCommitObj, "IdToCommitObj");
+			this.io.serialize(this.SplitPoints, "SplitPoints");
+			this.io.serialize(this.markedForRM, "markedForRM");
+			this.io.serialize(this.markedForADD, "markedForADD");
+			this.io.serialize(this.Head, "Head");
+			return true;
+		} catch (IllegalStateException e) {
 			return false;
 		}
-		
+
 	}
 
 	void add(String sArr[]) {
-		
+
 		/*
 		 * If the file had been marked for untracking (more on this in the
 		 * description of the rm command), then add just unmarks the file, and
 		 * also adds it to the staging area.
 		 */
 
-		
-		
-		File myfile= new File(System.getProperty("user.dir")+ sArr[0]);
-			if (!myfile.exists()){ // if file does not exist
-				System.out.println("File does not exist.");
-			}else if ( markedForRM.contains(sArr[0]) ){        //HOW TO HANDLE MANY MARKED FILES HERE
-				markedForRM.remove(sArr[0]);
-				// remove from the staging area... (no )
-			}else{
-				markedForADD.add(sArr[0]);	
-				io.save(sArr[0], io.STAGEDIR);
-				this.serialize();
+		File myfile = new File(System.getProperty("user.dir") + sArr[0]);
+		if (!myfile.exists()) { // if file does not exist
+			System.out.println("File does not exist.");
+		} else if (markedForRM.contains(sArr[0])) { // HOW TO HANDLE MANY MARKED
+													// FILES HERE
+			markedForRM.remove(sArr[0]);
+			// remove from the staging area... (no )
+		} else {
+			// this is done so we can only save the file name only (i.e. not
+			// including the folder)
+			// it also consistent with the way we save the files in the staging
+			// area...
+			String s = sArr[0];
+			while (s.contains("/")) {
+				s = s.substring(s.indexOf("/") + 1, s.length());
 			}
-		
-	}
-
-	 void commit(String sArr[]) {
-//		 this.io.save(sArr[], targetDir)
-		 if (this.markedForADD.isEmpty() && this.markedForRM.isEmpty() ){
-			 System.out.println("No changes added to the commit.");
-		 }
-		
-		 
-	}
-
-	 void find(String sArr[]) {
-		
-	}
-
-	 void rm(String sArr[]) {
-		
-	}
-
-	 void log() {
-		
-	}
-
-	 void global_log() {
+			markedForADD.add(s);
+			io.save(sArr[0], io.STAGEDIR);
+			this.serialize();
+		}
 
 	}
 
-	 void status() {
-	
+	void commit(String sArr[]) {
+		// this.io.save(sArr[], targetDir)
+		if (this.markedForADD.isEmpty() && this.markedForRM.isEmpty()) {
+			System.out.println("No changes added to the commit.");
+		} else {
+			// head should be pointing at the current commit at all times...
+
+			Commit newCommit = new Commit(sArr[0], Head, Head.myBranch);
+			if (!this.markedForADD.isEmpty()) { // files to be committed
+				for (String filetoadd : markedForADD) {
+					newCommit.CommitFromStaging(filetoadd);
+				}
+			}
+			if (!this.markedForRM.isEmpty()) {
+				for (String filetoRM : markedForADD) {
+					newCommit.CommitRM(filetoRM);
+				}
+			}
+
+			this.MessageToID.put(sArr[0], newCommit.ID);
+			this.IdToCommitObj.put(newCommit.ID, newCommit);
+			this.BranchToCommitObj.put(Head.myBranch, newCommit);
+
+			Head = newCommit;
+			// check if all the staged files are cleared and if RM is emptied
+			if (!this.markedForADD.isEmpty() && !this.markedForRM.isEmpty()) {
+				System.out
+						.println("there is still file name(s) in RM and/or ADD");
+			}
+		}
+
 	}
 
-	 void branch(String sArr[]) {
+	void find(String sArr[]) {
 
 	}
 
-	 void checkout(String sArr[]) {
-	
+	void rm(String sArr[]) {
+
 	}
 
-	 void merge(String sArr[]) {
-	
+	void log() {
+
 	}
 
-	 void rebase(String sArr[]) {
-		
+	void global_log() {
+
+	}
+
+	void status() {
+
+	}
+
+	void branch(String sArr[]) {
+
+	}
+
+	void checkout(String sArr[]) {
+
+	}
+
+	void merge(String sArr[]) {
+
+	}
+
+	void rebase(String sArr[]) {
+
 	}
 
 	@SuppressWarnings("unchecked")
@@ -165,15 +182,18 @@ public class Gitlet {
 		// TODO Auto-generated method stub
 
 		Gitlet G = new Gitlet();
-		//Deserialize
-		G.MessageToID = (HashMap<String,String>) G.io.deserialize("MessageToID");
-		G.BranchToCommitObj = (HashMap<String,Commit>) G.io.deserialize("BranchToCommitObj");
-		G.IdToCommitObj = (HashMap<String, Commit>) G.io.deserialize("IdToCommitObj");
+		// Deserialize
+		G.MessageToID = (HashMap<String, String>) G.io
+				.deserialize("MessageToID");
+		G.BranchToCommitObj = (HashMap<String, Commit>) G.io
+				.deserialize("BranchToCommitObj");
+		G.IdToCommitObj = (HashMap<String, Commit>) G.io
+				.deserialize("IdToCommitObj");
 		G.SplitPoints = (ArrayList<Commit>) G.io.deserialize("SplitPoints");
-		G.markedForRM= (ArrayList<String>) G.io.deserialize("markedForRM");
+		G.markedForRM = (ArrayList<String>) G.io.deserialize("markedForRM");
 		G.markedForADD = (ArrayList<String>) G.io.deserialize("markedForADD");
 		G.Head = (Commit) G.io.deserialize("Head");
-		
+
 		int length = args.length;
 
 		if (length == 0) {
@@ -189,8 +209,7 @@ public class Gitlet {
 				G.global_log();
 			} else if (args[0].equals("status")) {
 				G.status();
-			}
-			else if (args[0].equals("commit")) {
+			} else if (args[0].equals("commit")) {
 				System.out.println("Please enter a commit message.");
 			}
 

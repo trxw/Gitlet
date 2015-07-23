@@ -5,10 +5,11 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.Serializable;
 
 import static java.nio.file.StandardCopyOption.*;
 
-public class IOManagement {
+public class IOManagement implements Serializable {
 	String GITLETDIR = "/.gitlet";
 	String STAGEDIR = "/stage";
 	String COMMITDIR = "/commit";
@@ -65,12 +66,10 @@ public class IOManagement {
 				s = s.substring(s.indexOf("/")+1, s.length());
 			}
 			
-			
 			File myFile = new File(currentDir+"/"+fileName);
-			File myFileCopy = new File(currentDir+ GITLETDIR  + targetDir + "/" + s);
-
-
-
+			
+			// got rid of GITLETDIR because we can assume we the calls are made from with in the gitlet folder
+			File myFileCopy = new File(currentDir+ targetDir + "/" + s);
 			inStream  = new FileInputStream(myFile);
 			outStream = new FileOutputStream(myFileCopy);
 
@@ -96,6 +95,18 @@ public class IOManagement {
 	}
 		
 
+	}
+	
+	public boolean Delete(String fileName){
+		File myFile = new File(currentDir+"/"+fileName);
+		if (!(myFile.isDirectory()))
+		{
+		 myFile.delete();
+		 return true;
+		}
+		else{
+			return false;
+		}
 	}
 	
 	/*
