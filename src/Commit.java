@@ -42,21 +42,27 @@ public class Commit implements Serializable {
 	 */
 	public void CommitFromStaging(String fileName) {
 		IOManagement io = new IOManagement(System.getProperty("user.dir"));
-
-		fileToLocation.put(fileName, fileName + ID);
+		// location relative to the current Directory
+		String targetDir=io.COMMITDIR+"/"+ID;
+		
+		fileToLocation.put(fileName, targetDir);
 
 		// input is weird in order to deal with "/" in-front of filename in Save
 		// method in IO
-
+		
+		
+		// got rid of GITLETDIR because we can assume the calls are made from with in the gitlet folder
+		File myCommitDir = new File(io.mainDir+ targetDir);
+		myCommitDir.mkdir();
+		
 		io.save(io.STAGEDIR.substring(1, io.STAGEDIR.length()) + "/" + fileName,
-				io.COMMITDIR);
+				 targetDir);
 
 		// remove the file from the staging area after putting a copy in the
 		// commit DIR
 
 		io.Delete(io.STAGEDIR.substring(1, io.STAGEDIR.length()) + "/"
 				+ fileName);
-
 	}
 	
 // un-track all files tracked by the parent and marked for RM

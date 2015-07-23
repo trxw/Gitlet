@@ -59,17 +59,15 @@ public class IOManagement implements Serializable {
 	public boolean save( String fileName, String targetDir){ 
 		
 		try{
-			//Bruk:
-			
-			String s = fileName;
-			while (s.contains("/")){
-				s = s.substring(s.indexOf("/")+1, s.length());
-			}
+//			String s = fileName;
+//			while (s.contains("/")){
+//				s = s.substring(s.indexOf("/")+1, s.length());
+//			}
 			
 			File myFile = new File(currentDir+"/"+fileName);
 			
-			// got rid of GITLETDIR because we can assume we the calls are made from with in the gitlet folder
-			File myFileCopy = new File(currentDir+ targetDir + "/" + s);
+			// got rid of GITLETDIR because we can assume the calls are made from with in the gitlet folder
+			File myFileCopy = new File(currentDir+ targetDir + "/" +fileName);
 			inStream  = new FileInputStream(myFile);
 			outStream = new FileOutputStream(myFileCopy);
 
@@ -93,8 +91,6 @@ public class IOManagement implements Serializable {
 		e.printStackTrace();
 		return false;
 	}
-		
-
 	}
 	
 	public boolean Delete(String fileName){
