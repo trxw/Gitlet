@@ -132,7 +132,6 @@ public class Gitlet {
 
 	void add(String sArr[]) {
 		Deserialize();
-		System.out.println(markedForRM.toString());
 		/*
 		 * If the file had been marked for untracking (more on this in the
 		 * description of the rm command), then add just unmarks the file, and
@@ -201,17 +200,12 @@ public class Gitlet {
 				this.MessageToID.put(newCommit.Message, arr);
 			}
 			this.IdToCommitObj.put(newCommit.ID, newCommit);
-			this.BranchToCommitObj.put(Head.myBranch, newCommit); // advance the
-																	// pointer
-																	// // what
-																	// ever it
-																	// is!
-
+			this.BranchToCommitObj.put(Head.myBranch, newCommit); // advance-the-pointer
 			Head = newCommit;
 			// check if all the staged files are cleared and if RM is emptied
 			if (!this.markedForADD.isEmpty() || !this.markedForRM.isEmpty()) {
 				System.out
-						.println("there is still file name(s) in RM and/or ADD");
+				.println("there is still file name(s) in RM and/or ADD");
 			}
 		}
 		this.serialize();
