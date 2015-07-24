@@ -45,30 +45,58 @@ public class Gitlet {
 		IdToCommitObj = new HashMap<String, Commit>();
 		SplitPoints = new ArrayList<Commit>();
 		Head = null;
+		markedForRM = new ArrayList<String>();
+		markedForADD = new ArrayList<String>();
 		io = new IOManagement(System.getProperty("user.dir"));
 
 	}
 
 	void init() {
-		String Message = "initial commit.";
-		Commit firstCommit = new Commit(Message, null, "Master");
-		this.Head = firstCommit;
-		
-		// the Message is mapped to an ArrayList
-		if(MessageToID.containsKey(Message)){
-			ArrayList<String> arr=MessageToID.get(Message);
-			arr.add(firstCommit.ID);
-			this.MessageToID.put(firstCommit.Message, arr);
-		}else{
-			ArrayList<String> arr=new ArrayList<String>();
-			arr.add(firstCommit.ID);
-			this.MessageToID.put(firstCommit.Message, arr);
-		}
-		this.BranchToCommitObj.put(firstCommit.myBranch, firstCommit);
-		this.IdToCommitObj.put(firstCommit.ID, firstCommit);
 
-		// we need to Serialize after all methods is executed
-		this.serialize();
+		File myfile = new File(io.mainDir + io.GITLETDIR);
+		if (!myfile.exists()) {
+			if (myfile.mkdir()) {
+
+				System.out.println("Directory is created!");
+				// File myfile1 = new File(io.mainDir + io.GITLETDIR
+				// + io.COMMITDIR);
+				// myfile1.mkdir();
+				File myfile2 = new File(io.mainDir + io.GITLETDIR
+						+ io.COMMITDIR);
+				myfile2.mkdir();
+
+				File myfile3 = new File(io.mainDir + io.GITLETDIR + io.STAGEDIR);
+				myfile3.mkdir();
+
+				File myfile4 = new File(io.mainDir + io.GITLETDIR + io.METADIR);
+				myfile4.mkdir(); // put all the the Serialize objects here!
+
+				String Message = "initial commit.";
+				Commit firstCommit = new Commit(Message, "Master");
+				this.Head = firstCommit;
+
+				// the Message is mapped to an ArrayList
+				if (MessageToID.containsKey(Message)) {
+					ArrayList<String> arr = MessageToID.get(Message);
+					arr.add(firstCommit.ID);
+					this.MessageToID.put(firstCommit.Message, arr);
+				} else {
+					ArrayList<String> arr = new ArrayList<String>();
+					arr.add(firstCommit.ID);
+					this.MessageToID.put(firstCommit.Message, arr);
+				}
+				this.BranchToCommitObj.put(firstCommit.myBranch, firstCommit);
+				this.IdToCommitObj.put(firstCommit.ID, firstCommit);
+
+				// we need to Serialize after all methods is executed
+				this.serialize();
+
+			}
+		} else {
+			System.out
+					.println("A gitlet version control system already exists in the current directory.");
+
+		}
 
 	}
 
@@ -88,37 +116,58 @@ public class Gitlet {
 
 	}
 
-	void add(String sArr[]) {
+	@SuppressWarnings("unchecked")
+	void Deserialize() {
+		MessageToID = (HashMap<String, ArrayList<String>>) this.io
+				.deserialize("MessageToID");
+		BranchToCommitObj = (HashMap<String, Commit>) this.io
+				.deserialize("BranchToCommitObj");
+		IdToCommitObj = (HashMap<String, Commit>) this.io
+				.deserialize("IdToCommitObj");
+		SplitPoints = (ArrayList<Commit>) this.io.deserialize("SplitPoints");
+		markedForRM = (ArrayList<String>) this.io.deserialize("markedForRM");
+		markedForADD = (ArrayList<String>) this.io.deserialize("markedForADD");
+		Head = (Commit) this.io.deserialize("Head");
+	}
 
+	void add(String sArr[]) {
+		Deserialize();
+		System.out.println(markedForRM.toString());
 		/*
 		 * If the file had been marked for untracking (more on this in the
 		 * description of the rm command), then add just unmarks the file, and
 		 * also adds it to the staging area.
 		 */
 
-		File myfile = new File(System.getProperty("user.dir") + "/" + sArr[0]);
+		File myfile = new File(System.getProperty("user.dir") + "\\" + sArr[0]);
 		if (!myfile.exists()) { // if file does not exist
 			System.out.println("File does not exist.");
-		} else if (markedForRM.contains(sArr[0])) { // HOW TO HANDLE MANY MARKED
-													// FILES HERE
-			markedForRM.remove(sArr[0]);
-			// remove from the staging area... (no )
-		} else {
-			// this is done so we can only save the file name only (i.e. not
-			// including the folder)
-			// it also consistent with the way we save the files in the staging
-			// area...
+		} else if (markedForRM != null) {
+			if (markedForRM.contains(sArr[0])) {
+				markedForRM.remove(sArr[0]);
+				System.out.println("we have unmarked RM marked file");
+				// remove from the staging area... (no )
+			} else {
+				if (!markedForADD.contains(sArr[0])) {
+					markedForADD.add(sArr[0]);
+				}
+				io.save(sArr[0], io.STAGEDIR, 1);
+				this.serialize();
+			}
 
-			// same files with different paths are considered different...
+		} else {
+			// same files with different paths are considered different...//
 			// piazza
+
 			markedForADD.add(sArr[0]);
-			io.save(sArr[0], io.STAGEDIR);
+			io.save(sArr[0], io.STAGEDIR, 1);
 			this.serialize();
 		}
 
 	}
 
 	void commit(String sArr[]) {
+		Deserialize();
 		// this.io.save(sArr[], targetDir)
 		if (this.markedForADD.isEmpty() && this.markedForRM.isEmpty()) {
 			System.out.println("No changes added to the commit.");
@@ -126,23 +175,28 @@ public class Gitlet {
 			// head should be pointing at the current commit at all times...
 
 			Commit newCommit = new Commit(sArr[0], Head, Head.myBranch);
+			System.out.println(markedForADD.size());
+
 			if (!this.markedForADD.isEmpty()) { // files to be committed
 				for (String filetoadd : markedForADD) {
 					newCommit.CommitFromStaging(filetoadd);
 				}
+				markedForADD.clear(); // remove all add names
+										// files are removed from
 			}
 			if (!this.markedForRM.isEmpty()) {
-				for (String filetoRM : markedForADD) {
+				for (String filetoRM : markedForRM) {
 					newCommit.CommitRM(filetoRM);
 				}
+				markedForRM.clear(); // remove all marking for next RM
 			}
 			// the Message is mapped to an ArrayList
-			if(MessageToID.containsKey(sArr[0])){
-				ArrayList<String> arr=MessageToID.get(sArr[0]);
+			if (MessageToID.containsKey(sArr[0])) {
+				ArrayList<String> arr = MessageToID.get(sArr[0]);
 				arr.add(newCommit.ID);
 				this.MessageToID.put(newCommit.Message, arr);
-			}else{
-				ArrayList<String> arr=new ArrayList<String>();
+			} else {
+				ArrayList<String> arr = new ArrayList<String>();
 				arr.add(newCommit.ID);
 				this.MessageToID.put(newCommit.Message, arr);
 			}
@@ -155,7 +209,7 @@ public class Gitlet {
 
 			Head = newCommit;
 			// check if all the staged files are cleared and if RM is emptied
-			if (!this.markedForADD.isEmpty() && !this.markedForRM.isEmpty()) {
+			if (!this.markedForADD.isEmpty() || !this.markedForRM.isEmpty()) {
 				System.out
 						.println("there is still file name(s) in RM and/or ADD");
 			}
@@ -164,17 +218,20 @@ public class Gitlet {
 	}
 
 	void rm(String sArr[]) {
+		Deserialize();
 		String s = sArr[0];
 		if (markedForADD.contains(s) || Head.fileToLocation.containsKey(s)) {
 			// the file has been added since last commit...
-
+			System.out.println(markedForADD.toString());
 			if (markedForADD.contains(s)) {
 				markedForADD.remove(s);
-				io.Delete(io.STAGEDIR.substring(1, io.STAGEDIR.length()) + "/"
-						+ sArr);
+				io.Delete("\\.gitlet\\"
+						+ io.STAGEDIR.substring(1, io.STAGEDIR.length()) + "\\"
+						+ sArr[0]);
 			} else {
-				markedForRM.add(s);
-
+				if (!markedForRM.contains(s)) {
+					markedForRM.add(s);
+				}
 			}
 		} else { // this means the file was not staged nor tracked by the parent
 					// node(i.e. Head)
@@ -184,12 +241,13 @@ public class Gitlet {
 	}
 
 	void log() {
+		Deserialize();
 		Commit C = Head;
 		while (C != null) {
 			System.out.println("===");
-			System.out.println("Commit ID:-" + C.ID);
-			System.out.println("Time:-" + C.Time);
-			System.out.println("Commit Message" + C.Message);
+			System.out.println("Commit ID:- " + C.ID);
+			System.out.println("Time:- " + C.Time);
+			System.out.println("Commit Message:- " + C.Message);
 			System.out.println();
 			C = C.prevCommit;
 		}
@@ -197,33 +255,39 @@ public class Gitlet {
 	}
 
 	void global_log() {
-
+		Deserialize();
 		for (Entry<String, Commit> entry : IdToCommitObj.entrySet()) {
 			System.out.println("===");
-			System.out.println("Commit ID:-" + entry.getValue().ID);
-			System.out.println("Time:-" + entry.getValue().Time);
-			System.out.println("Commit Message" + entry.getValue().Message);
+			System.out.println("Commit ID:- " + entry.getValue().ID);
+			System.out.println("Time:- " + entry.getValue().Time);
+			System.out.println("Commit Message:- " + entry.getValue().Message);
 			System.out.println();
 
 		}
 	}
 
 	void find(String sArr[]) {
+		Deserialize();
 		// if different commits have the same message our hash system breaks
 		// down
 		if (!MessageToID.containsKey(sArr[0])) {
 			System.out.println("Found no commit with that message.");
-		}else{
-			for(String S: MessageToID.get(sArr[0])){ // get all ID and Print them out one by one....
-				System.out.println(S);	
+		} else {
+			for (String S : MessageToID.get(sArr[0])) { // get all ID and Print
+														// them out one by
+														// one....
+				System.out.println(S);
 			}
 		}
 	}
 
 	void status() {
+		Deserialize();
 		System.out.println("=== Branches ===");
 		for (Entry<String, Commit> entry : BranchToCommitObj.entrySet()) {
-			if (entry.getKey() == Head.myBranch) {
+			System.out.println(entry.getKey());
+			System.out.println(Head.myBranch);
+			if (entry.getKey().equals(Head.myBranch)) {
 				System.out.println("*" + entry.getKey()); // * on current
 															// branch!
 			} else {
@@ -243,6 +307,8 @@ public class Gitlet {
 	}
 
 	void branch(String sArr[]) {
+
+		Deserialize();
 		if (!BranchToCommitObj.containsKey(sArr[0])) {
 			BranchToCommitObj.put(sArr[0], Head);
 		} else {
@@ -252,6 +318,7 @@ public class Gitlet {
 	}
 
 	void rmbranch(String sArr[]) {
+		Deserialize();
 		if (!BranchToCommitObj.containsKey(sArr[0])) {
 			System.out.println("A branch with that name does not exist.");
 		} else if (BranchToCommitObj.get(sArr[0]).equals(Head)) {
@@ -263,9 +330,11 @@ public class Gitlet {
 	}
 
 	void checkout(String sArr[]) {
+		Deserialize();
 		if (sArr.length == 1) { // it means that sArr is [Branch name] or [file
 								// name]
-			if (BranchToCommitObj.containsKey(sArr[0])) { // it must be a [Branch]
+			if (BranchToCommitObj.containsKey(sArr[0])) { // it must be a
+															// [Branch]
 
 				if (BranchToCommitObj.get(sArr).equals(Head)) {
 					System.out
@@ -277,32 +346,35 @@ public class Gitlet {
 							.get(sArr).fileToLocation.entrySet()) {
 						// loop to place all files in to the current
 						// directory...
-						io.save(entry.getValue() + "/" + sArr[0], "");
+						io.save(entry.getValue() + "/" + sArr[0], "", 1);
 					}
-					Head= BranchToCommitObj.get(sArr);
-					
+					Head = BranchToCommitObj.get(sArr);
+
 				}
 			} else { // sArr is [Branch name] or [Files name]
-				if (!Head.fileToLocation.containsKey(sArr[0])) {  // it is neither
+				if (!Head.fileToLocation.containsKey(sArr[0])) { // it is
+																	// neither
 					System.out
 							.println("File does not exist in the most recent commit, or no such branch exists.");
 				} else {
 					// grab the file from the commit Dir. to the current Dir.
 					io.save(Head.fileToLocation.get(sArr[0]) + "/" + sArr[0],
-							"");
+							"", 1);
 				}
 			}
 
-		} else {		
+		} else {
 			// sArr is [Commit ID] [Files name]
-			if (!IdToCommitObj.containsKey(sArr[0])){
+			if (!IdToCommitObj.containsKey(sArr[0])) {
 				System.out.println("No commit with that id exists.");
-			}else if(!IdToCommitObj.get(sArr[0]).fileToLocation.containsKey(sArr[1])){
+			} else if (!IdToCommitObj.get(sArr[0]).fileToLocation
+					.containsKey(sArr[1])) {
 				System.out.println("File does not exist in that commit.");
-			}else{ // file exists in the Commit dir. 
-				io.save(IdToCommitObj.get(sArr[0]).fileToLocation.get(sArr[1])+ "/" + sArr[1], "");
+			} else { // file exists in the Commit dir.
+				io.save(IdToCommitObj.get(sArr[0]).fileToLocation.get(sArr[1])
+						+ "/" + sArr[1], "", 1);
 			}
-			
+
 		}
 
 		this.serialize();
@@ -310,38 +382,30 @@ public class Gitlet {
 	}
 
 	void merge(String sArr[]) {
+		Deserialize();
 
 		this.serialize();
 
 	}
 
 	void rebase(String sArr[]) {
+		Deserialize();
 
 		this.serialize();
 	}
 
 	@SuppressWarnings("unchecked")
 	public static void main(String[] args) {
-
+		// System.out.println(args[0]);
+		// System.out.println(args[1]);
 		Gitlet G = new Gitlet();
-		// Deserialize
-		G.MessageToID = (HashMap<String, ArrayList<String>>) G.io
-				.deserialize("MessageToID");
-		G.BranchToCommitObj = (HashMap<String, Commit>) G.io
-				.deserialize("BranchToCommitObj");
-		G.IdToCommitObj = (HashMap<String, Commit>) G.io
-				.deserialize("IdToCommitObj");
-		G.SplitPoints = (ArrayList<Commit>) G.io.deserialize("SplitPoints");
-		G.markedForRM = (ArrayList<String>) G.io.deserialize("markedForRM");
-		G.markedForADD = (ArrayList<String>) G.io.deserialize("markedForADD");
-		G.Head = (Commit) G.io.deserialize("Head");
 
 		int length = args.length;
 
 		if (length == 0) {
 			System.out.println("Please enter a command.");
 		} else if (length == 1) {
-			if (args[0].equals("init")) {
+			if ((args[0].equals("init"))) {
 				G.init();
 			} else if (args[0].equals("log")) {
 				G.log();
@@ -353,6 +417,8 @@ public class Gitlet {
 				G.status();
 			} else if (args[0].equals("commit")) {
 				System.out.println("Please enter a commit message.");
+			} else {
+				System.out.println("No command with that name exists.");
 			}
 
 		}
@@ -391,6 +457,8 @@ public class Gitlet {
 
 			else if (args[0].equals("rebase")) {
 				G.rebase(Arrays.copyOfRange(args, 1, length));
+			} else {
+				System.out.println("No command with that name exists.");
 			}
 
 		}
