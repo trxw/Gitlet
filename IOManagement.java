@@ -37,10 +37,10 @@ public class IOManagement implements Serializable {
 
 		try {
 			 String s = fileName;
-			 if (t==2){
+			 //if (t==2){
 			 while (s.contains( BRUKISTHESHIT )){
 			s = s.substring(s.indexOf( BRUKISTHESHIT )+1, s.length());
-			 }
+			// }
 			 }
 			System.out.println("This is "+currentDir+ GITLETDIR +  BRUKISTHESHIT  + fileName);
 			System.out.println( currentDir);

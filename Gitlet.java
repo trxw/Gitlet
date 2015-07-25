@@ -152,6 +152,7 @@ public class Gitlet {
 				if (!markedForADD.contains(sArr[0])) {
 					markedForADD.add(sArr[0]);
 				}
+				System.out.println("sArr is "+sArr[0]);
 				io.save(sArr[0], io.STAGEDIR, 1);
 				this.serialize();
 			}
