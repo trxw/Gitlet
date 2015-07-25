@@ -1,3 +1,5 @@
+package Gitlet;
+
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.io.*;
@@ -5,8 +7,8 @@ import java.io.*;
 public class Commit implements Serializable {
 	// commit must track its parents files not copy them...
 	// if the file is
-	String OMIDISTHESHIT = "/";
-	String BRUKISTHESHIT = "/";
+	String OS = "\\";
+	String BS = "\\";
 
 	HashMap<String, String> fileToLocation;
 	boolean isSplitPoint; // true if it is a split point else false
@@ -57,28 +59,27 @@ public class Commit implements Serializable {
 	 * replace it
 	 */
 	public void CommitFromStaging(String fileName) {
-		IOManagement io = new IOManagement(System.getProperty("user.dir"));
-		// location relative to the current Directory
-		String targetDir = io.COMMITDIR + OMIDISTHESHIT + ID;
-
-		fileToLocation.put(fileName, targetDir.substring(1, targetDir.length()));
-
-		// input is weird in order to deal with "/" in-front of filename in Save
-		// method in IO
-
-		// got rid of GITLETDIR because we can assume the calls are made from
-		// with in the gitlet folder
-		File myCommitDir = new File(io.mainDir +io.GITLETDIR + targetDir);
+		
+		IOManagement io = new IOManagement();
+		
+		// where files are going
+		String targetDir =io.currentDir+io.GITLETDIR + io.COMMITDIR + OS +ID+OS+fileName;
+		// where files are coming from
+		String grabFromDir= io.currentDir+io.GITLETDIR+ io.STAGEDIR+OS+fileName;
+		
+		
+		// add the file and the name of the files Dir. inside of commit Dir.
+		fileToLocation.put(fileName,ID);
+		//create the file for this particular commit inside of the commit dIR
+		File myCommitDir = new File(io.currentDir+io.GITLETDIR + io.COMMITDIR + OS +ID);
 		myCommitDir.mkdir();
 
-		io.save("stage" + OMIDISTHESHIT + fileName,
-				targetDir,2);
+		io.save(grabFromDir,targetDir);
 
 		// remove the file from the staging area after putting a copy in the
 		// commit DIR
 
-		io.Delete(OMIDISTHESHIT+".gitlet"+io.STAGEDIR + BRUKISTHESHIT
-				+ fileName);
+		io.Delete(grabFromDir);
 	}
 
 	// un-track all files tracked by the parent and marked for RM
