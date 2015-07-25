@@ -341,19 +341,20 @@ public class Gitlet {
 							.get(sArr[0]).fileToLocation.entrySet()) {
 						// loop to place all files in to the current
 						// directory...
-						io.save(entry.getValue() + "/" + sArr[0], "", 1);
+						io.save(entry.getValue() + BRUKISTHESHIT + sArr[0], "", 1);
 					}
 					Head = BranchToCommitObj.get(sArr[0]);
 
 				}
-			} else { // sArr[0] is [Branch name] or [Files name]
+			} else { // sArr[0] is [Branch name or [Files name]
 				if (!Head.fileToLocation.containsKey(sArr[0])) { // it is
 																	// neither
 					System.out
 							.println("File does not exist in the most recent commit, or no such branch exists.");
 				} else {
 					// grab the file from the commit Dir. to the current Dir.
-					io.save(Head.fileToLocation.get(sArr[0]) + "/" + sArr[0],
+					//System.out.println("This is not a problem:"+Head.fileToLocation.get(sArr[0]));
+					io.save(Head.fileToLocation.get(sArr[0]) + sArr[0],
 							"", 1);
 				}
 			}

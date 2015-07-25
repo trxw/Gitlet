@@ -61,7 +61,7 @@ public class Commit implements Serializable {
 		// location relative to the current Directory
 		String targetDir = io.COMMITDIR + OMIDISTHESHIT + ID;
 
-		fileToLocation.put(fileName, targetDir);
+		fileToLocation.put(fileName, targetDir.substring(1,targetDir.length() ));
 
 		// input is weird in order to deal with "/" in-front of filename in Save
 		// method in IO
@@ -77,7 +77,7 @@ public class Commit implements Serializable {
 		// remove the file from the staging area after putting a copy in the
 		// commit DIR
 
-		io.Delete(OMIDISTHESHIT+".gitlet"+OMIDISTHESHIT+io.STAGEDIR + BRUKISTHESHIT
+		io.Delete(OMIDISTHESHIT+".gitlet"+io.STAGEDIR + BRUKISTHESHIT
 				+ fileName);
 	}
 

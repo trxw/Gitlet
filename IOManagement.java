@@ -42,14 +42,21 @@ public class IOManagement implements Serializable {
 			s = s.substring(s.indexOf( BRUKISTHESHIT )+1, s.length());
 			 }
 			 }
+			System.out.println("This is "+currentDir+ GITLETDIR +  BRUKISTHESHIT  + fileName);
+			System.out.println( currentDir);
+			System.out.println("filename"+ fileName);
+			System.out.println( GITLETDIR );
+			File myFile = new File(currentDir+ GITLETDIR +  BRUKISTHESHIT  + fileName);
+			File myFileCopy;
 			
-			File myFile = new File(currentDir +  BRUKISTHESHIT  + fileName);
-
 			// got rid of GITLETDIR because we can assume the calls are made
 			// from with in the gitlet folder
 			
-			
-			File myFileCopy = new File(currentDir + GITLETDIR + targetDir+  BRUKISTHESHIT + s );
+			if(targetDir!=""){
+				 myFileCopy = new File(currentDir + GITLETDIR + targetDir+  BRUKISTHESHIT + s );}
+			else{
+				 myFileCopy = new File(currentDir + targetDir+  BRUKISTHESHIT + s );
+			}
 			myFileCopy.getParentFile().mkdirs();
 			
 			inStream = new FileInputStream(myFile);
