@@ -1,4 +1,4 @@
-package Gitlet;
+
 
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -7,8 +7,8 @@ import java.io.*;
 public class Commit implements Serializable {
 	// commit must track its parents files not copy them...
 	// if the file is
-	String OS = "\\";
-	String BS = "\\";
+	String OS = "/";
+	String BS = "/";
 
 	HashMap<String, String> fileToLocation;
 	boolean isSplitPoint; // true if it is a split point else false
@@ -79,7 +79,7 @@ public class Commit implements Serializable {
 		// remove the file from the staging area after putting a copy in the
 		// commit DIR
 
-		io.Delete(grabFromDir);
+		io.Delete(io.currentDir+io.GITLETDIR+ io.STAGEDIR,fileName);
 	}
 
 	// un-track all files tracked by the parent and marked for RM

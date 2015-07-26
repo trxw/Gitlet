@@ -1,4 +1,3 @@
-package Gitlet;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -8,8 +7,8 @@ import java.util.Map.Entry;
 
 public class Gitlet {
 	String CurrentBranch;
-	String BS = "\\";
-	String OS = "\\";
+	String BS = "/";
+	String OS = "/";
 	public Commit Head; // keeps track of the most recent checked out
 						// branch
 	public ArrayList<Commit> SplitPoints; // keeps track of split nodes for
@@ -140,7 +139,7 @@ public class Gitlet {
 		Deserialize();
 		/*
 		 * If the file had been marked for untracking (more on this in the
-		 * description of the rm command), then add just unmarks the file, and
+		 * description of the 	command), then add just unmarks the file, and
 		 * also adds it to the staging area.
 		 */
 		String filename = sArr[0];
@@ -220,6 +219,22 @@ public class Gitlet {
 		this.serialize();
 	}
 
+	void reset(String[] sArr){
+		if(IdToCommitObj.containsKey(sArr[0])  ){
+			for (Entry<String, String> entry : IdToCommitObj.get(sArr[0]).fileToLocation.entrySet()) {
+         		String S= io.currentDir+io.GITLETDIR+io.COMMITDIR+BS+entry.getValue()+BS+entry.getKey();
+				io.save(S, io.currentDir);
+				
+			}
+			Head= IdToCommitObj.get(sArr[0]);
+		}
+		else{
+			System.out.println("No commit with that id exists.");
+		}
+		
+	}
+	
+	
 	void rm(String sArr[]) {
 		Deserialize();
 		String fileName = sArr[0];
@@ -228,9 +243,8 @@ public class Gitlet {
 			// the file has been added since last commit...
 			if (markedForADD.contains(fileName)) {
 				markedForADD.remove(fileName);
-				String grabFromDir = io.currentDir + io.GITLETDIR + io.STAGEDIR
-						+ OS + fileName;
-				io.Delete(grabFromDir);
+				String grabFromDir = io.currentDir + io.GITLETDIR + io.STAGEDIR;
+				io.Delete(grabFromDir, fileName);
 			} else {
 				if (!markedForRM.contains(fileName)) {
 					markedForRM.add(fileName);
@@ -305,6 +319,8 @@ public class Gitlet {
 		for (String S : markedForRM) {
 			System.out.println(S);
 		}
+		System.out.println();
+
 	}
 
 	void branch(String sArr[]) {
@@ -437,7 +453,9 @@ public class Gitlet {
 			else if (args[0].equals("commit")) {
 				G.commit(Arrays.copyOfRange(args, 1, length));
 			}
-
+			else if (args[0].equals("reset")) {
+				G.reset(Arrays.copyOfRange(args, 1, length));
+			}
 			else if (args[0].equals("rm")) {
 				G.rm(Arrays.copyOfRange(args, 1, length));
 			}

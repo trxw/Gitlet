@@ -1,7 +1,7 @@
-package Gitlet;
 
 import java.io.*;
 import java.nio.file.Files;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -12,8 +12,8 @@ import java.io.Serializable;
 import static java.nio.file.StandardCopyOption.*;
 
 public class IOManagement implements Serializable {
-	String BS = "\\";
-	String OS = "\\";
+	String BS = "/";
+	String OS = "/";
 	String GITLETDIR =  BS +".gitlet";
 	String STAGEDIR =  BS +"stage";
 	String COMMITDIR =  BS +"commit";
@@ -64,16 +64,36 @@ public class IOManagement implements Serializable {
 		}
 	}
 
-	public boolean Delete(String locationWithName) {
-		File myFile = new File(locationWithName);
-		if (!(myFile.isDirectory())) {
-			myFile.delete();
-			return true;
-		} else {
-			return false;
+	/*
+	 * locationWithName contains only the path to the directory where the file or directory to be removed 
+	 * S exists. 
+	 */
+	
+	public void Delete(String locationWithName,String S) {
+		
+		if (S.contains(BS)){
+			S=S.substring(0,S.indexOf(BS));	
+		}
+		File myFile = new File(locationWithName+BS+S);
+		try{
+			recursiveDelete(myFile);
+		}
+		catch(IOException e){
+			
+		}
+		
+	}
+	
+	void recursiveDelete(File d) throws IOException {
+		if (d.isDirectory()) {
+			for (File f : d.listFiles()) {
+				recursiveDelete(f);
+			}
+		}
+		if (!d.delete()) {
+			throw new IOException("Failed to delete file " + d.getPath());
 		}
 	}
-
 	/*
 	 * 
 	 * 

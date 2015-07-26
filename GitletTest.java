@@ -1,3 +1,4 @@
+
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -281,4 +282,208 @@ public class GitletTest {
 			return e.getMessage();
 		}
 	}
+
+
+
+	private static String getFirstId(String message) {
+		try {
+			String content = gitlet("find", message);
+			return content.split(LINE_SEPARATOR)[0];
+		} catch (Exception e) {
+			return "";
+		}
+	}
+
+@Test
+	public void testOldCheckoutOldCommit() {
+
+		String wugFileName = TESTING_DIR + "wug.txt";
+		String wugText = "This is a wug.";
+		createFile(wugFileName, wugText);
+
+		String wugsFileName = TESTING_DIR + "wugs.txt";
+		createFile(wugsFileName, "There are two wugs.");
+
+		gitlet("init");
+		gitlet("add", wugFileName);
+		gitlet("commit", "added wug");
+
+		writeFile(wugFileName, "This is not a wug.");
+		gitlet("add", wugsFileName);
+		String wugsMessage = "added wugs";
+		gitlet("commit", wugsMessage);
+
+		writeFile(wugFileName, "This is definitely not a wug.");
+		String commitId = getFirstId(wugsMessage);
+		gitlet("checkout", commitId, wugFileName);
+		assertEquals(wugText, getText(wugFileName));
+	}
+	@Test
+	public void testResetHistory() {
+		String wugFileName = TESTING_DIR + "wug.txt";
+		String commitMessage0 = "initial commit";
+		String commitMessage1 = "added wug";
+		String commitMessage2 = "made wug awesome";
+		String commitMessage3 = "what... what happened?!";
+		createFile(wugFileName, "This is a wug.");
+
+		gitlet("init");
+		gitlet("add", wugFileName);
+		gitlet("commit", commitMessage1);
+
+		writeFile(wugFileName, "This is an awesome wug.");
+		gitlet("add", wugFileName);
+		gitlet("commit", commitMessage2);
+
+		writeFile(wugFileName, "It's... it's a...?!");
+		gitlet("add", wugFileName);
+		gitlet("commit", commitMessage3);
+
+		System.out.println(getFirstId(commitMessage2));
+		gitlet("reset", getFirstId(commitMessage2));
+		assertArrayEquals(new String[] { commitMessage2, commitMessage1,
+		commitMessage0 }, extractCommitMessages(gitlet("log")));
+	}
+
+	@Test
+	public void testCheckoutFromAnotherBranch() {
+		String wugFileName = TESTING_DIR + "wug.txt";
+		createFile(wugFileName, "This is a wug.");
+
+		gitlet("init");
+		gitlet("add", wugFileName);
+		gitlet("commit", "added wug");
+
+		gitlet("branch", "cool-beans");
+		gitlet("checkout", "cool-beans");
+		String coolMessage = "cool branch!";
+		writeFile(wugFileName, "This is a cool wug.");
+		gitlet("add", wugFileName);
+		gitlet("commit", coolMessage);
+
+		gitlet("checkout", "master");
+		assertEquals("This is a wug.", getText(wugFileName));
+
+		writeFile(wugFileName, "This is the master of all wugs.");
+		gitlet("add", wugFileName);
+		gitlet("commit", "mastered wugs");
+
+		writeFile(wugFileName, "Wug is mastered.");
+		String commitId = getFirstId(coolMessage);
+		gitlet("checkout", commitId, wugFileName);
+		assertEquals("This is a cool wug.", getText(wugFileName));
+	}
+	@Test
+	public void testUnstage() {
+		String wugFileName = TESTING_DIR + "wug.txt";
+		String wugText = "This is a wug.";
+		createFile(wugFileName, wugText);
+
+		String wugsFileName = TESTING_DIR + "wugs.txt";
+		createFile(wugsFileName, "There are two wugs.");
+
+		gitlet("init");
+
+		gitlet("add", wugFileName);
+		gitlet("commit", "added wug");
+
+		writeFile(wugFileName, "This is not a wug.");
+		gitlet("add", wugFileName);
+		gitlet("add", wugsFileName);
+		gitlet("rm", wugFileName);
+		gitlet("commit", "added wugs but not wug");
+
+		gitlet("checkout", wugFileName);
+		assertEquals(wugText, getText(wugFileName));
+	}
+
+	@Test
+	public void testRemove() {
+		String wugFileName = TESTING_DIR + "wug.txt";
+		createFile(wugFileName, "This is a wug.");
+
+		String wugsFileName = TESTING_DIR + "wugs.txt";
+		createFile(wugsFileName, "There are two wugs.");
+
+		gitlet("init");
+
+		gitlet("add", wugFileName);
+		gitlet("commit", "added wug");
+
+		String changedText = "This is definitely a wug.";
+		writeFile(wugFileName, changedText);
+		gitlet("rm", wugFileName);
+		gitlet("add", wugsFileName);
+		gitlet("commit", "added wugs and removed wug");
+
+		String errorMessage = gitlet("checkout", wugFileName);
+		assertEquals(
+				"File does not exist in the most recent commit, or no such branch exists.",
+				errorMessage.trim());
+		assertEquals(changedText, getText(wugFileName));
+	}
+	@Test
+	public void testBasicStatus() {
+		String wugFileName = TESTING_DIR + "wug.txt";
+		String wugText = "This is a wug.";
+		createFile(wugFileName, wugText);
+
+		String wugsFileName = TESTING_DIR + "wugs.txt";
+		String wugsText = "There are two wugs.";
+		createFile(wugsFileName, wugsText);
+
+		gitlet("init");
+
+		gitlet("add", wugFileName);
+		gitlet("commit", "added wug");
+
+		gitlet("add", wugsFileName);
+		gitlet("rm", wugFileName);
+
+		String statusText = "";
+		PrintStream originalOut = System.out;
+		try {
+			/*
+			 * I'm constructing statusText this way so I don't have to deal with
+			 * operating system-dependent new lines... thanks Windows!
+			 */
+			ByteArrayOutputStream printingResults = new ByteArrayOutputStream();
+			System.setOut(new PrintStream(printingResults));
+			System.out.println("=== Branches ===");
+			System.out.println("*master");
+			System.out.println();
+			System.out.println("=== Staged Files ===");
+			System.out.println(wugsFileName);
+			System.out.println();
+			System.out.println("=== Files Marked for Untracking ===");
+			System.out.println(wugFileName);
+			System.out.println();
+			statusText = printingResults.toString();
+		} finally {
+			System.setOut(originalOut);
+		}
+		assertEquals(statusText.trim(), gitlet("status").trim());
+	}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 }
