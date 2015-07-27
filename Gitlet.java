@@ -124,16 +124,19 @@ public class Gitlet {
 
 	@SuppressWarnings("unchecked")
 	void Deserialize() {
-		if(!deserialized){
+		if (!deserialized) {
 			MessageToID = (HashMap<String, ArrayList<String>>) this.io
 					.deserialize("MessageToID");
 			BranchToCommitObj = (HashMap<String, Commit>) this.io
 					.deserialize("BranchToCommitObj");
 			IdToCommitObj = (HashMap<String, Commit>) this.io
 					.deserialize("IdToCommitObj");
-			SplitPoints = (ArrayList<Commit>) this.io.deserialize("SplitPoints");
-			markedForRM = (ArrayList<String>) this.io.deserialize("markedForRM");
-			markedForADD = (ArrayList<String>) this.io.deserialize("markedForADD");
+			SplitPoints = (ArrayList<Commit>) this.io
+					.deserialize("SplitPoints");
+			markedForRM = (ArrayList<String>) this.io
+					.deserialize("markedForRM");
+			markedForADD = (ArrayList<String>) this.io
+					.deserialize("markedForADD");
 			Head = (Commit) this.io.deserialize("Head");
 			CurrentBranch = (String) this.io.deserialize("CurrentBranch");
 			conflicted = (boolean) io.deserialize("conflicted");
@@ -180,13 +183,6 @@ public class Gitlet {
 		}
 
 	}
-	
-	
-	
-	
-	
-	
-	
 
 	void commit(String sArr[]) {
 		Deserialize();
@@ -436,133 +432,239 @@ public class Gitlet {
 
 	void merge(String sArr[]) {
 		Deserialize();
-		
-		if(!BranchToCommitObj.containsKey(sArr[0])){
-			System.out.println("A branch with that name does not exist.");
-		}
-		else if(BranchToCommitObj.get(sArr[0]).ID.equals(Head.ID) ){
-			System.out.println("Cannot merge a branch with itself.");
-		}
-		else{
-			//Obtain the union of set of files associated with the Head and last commit of given branch
-			Set<String> allFiles = new HashSet<String>();
-			allFiles.addAll( BranchToCommitObj.get(sArr[0]).fileToLocation.keySet() );
-			allFiles.addAll( Head.fileToLocation.keySet() );
-			Commit splitPoint = getSplitPoint(BranchToCommitObj.get(sArr[0]), Head);
-			
-			//Loop through all the files:
-			for(String fileName: allFiles){
 
-				if(!compare(fileName, BranchToCommitObj.get(sArr[0]), splitPoint ) && 
-						compare(fileName, Head, splitPoint )){
-					//replace the file in the current branch with file in given branch
-					
-					
-				}else if(!compare(fileName, BranchToCommitObj.get(sArr[0]), splitPoint ) && 
-						!compare(fileName, Head, splitPoint )){
-						conflicted = true;
-						//copy the file from given branch after adding ".confliced" to file name. 
-						
+		if (!BranchToCommitObj.containsKey(sArr[0])) {
+			System.out.println("A branch with that name does not exist.");
+		} else if (BranchToCommitObj.get(sArr[0]).ID.equals(Head.ID)) {
+			System.out.println("Cannot merge a branch with itself.");
+		} else {
+			// Obtain the union of set of files associated with the Head and
+			// last commit of given branch
+			Set<String> allFiles = new HashSet<String>();
+			allFiles.addAll(BranchToCommitObj.get(sArr[0]).fileToLocation
+					.keySet());
+			allFiles.addAll(Head.fileToLocation.keySet());
+			Commit splitPoint = getSplitPoint(BranchToCommitObj.get(sArr[0]),
+					Head);
+
+			// Loop through all the files:
+			for (String fileName : allFiles) {
+
+				if (!compare(fileName, BranchToCommitObj.get(sArr[0]),
+						splitPoint) && compare(fileName, Head, splitPoint)) {
+					// replace the file in the current branch with file in given
+					// branch
+
+				} else if (!compare(fileName, BranchToCommitObj.get(sArr[0]),
+						splitPoint) && !compare(fileName, Head, splitPoint)) {
+					conflicted = true;
+					// copy the file from given branch after adding ".confliced"
+					// to file name.
+
 				}
-					
-				
-				
+
 			}
-			
+
 			String mergeMessage;
-			if(!conflicted){
-				mergeMessage =  "Merged "+CurrentBranch+" with "+sArr[0];
+			if (!conflicted) {
+				mergeMessage = "Merged " + CurrentBranch + " with " + sArr[0];
 				Head = new Commit(mergeMessage, Head, CurrentBranch);
-			}else{
+			} else {
 				System.out.println("Encountered a merge conflict.");
 			}
 
-			
-			
 		}
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
+
 		this.serialize();
 
 	}
 
-	
-	
 	/**
+	 * takes in two commit objects and find the split point of the two branches
+	 * - Assumes that there is a split point between the two branches...
 	 * 
 	 * @param currentCommit
+	 *            Current branch in the merge/rebase Method
 	 * @param givenCommit
-	 * @return
+	 *            Current branch in the merge/rebase Method
+	 * @return thE Commit object @ the split-point of the two given branches OR
+	 *         Null if there is no split-point...
 	 */
-	public Commit getSplitPoint(Commit currentCommit, Commit givenCommit){
-		
-		
+	public Commit getSplitPoint(Commit currentCommit, Commit givenCommit) {
+		Commit C = currentCommit;
+		Commit G = givenCommit;
+		ArrayList<Commit> Arr = new ArrayList<Commit>();
+		int Count = 0;
+		while (C != null && Count < SplitPoints.size()) {
+			if (C.isSplitPoint) {
+				Arr.add(C);
+				Count++;
+			}
+			C = C.prevCommit;
+		}
+
+		Count = 0;
+		while (G != null) {
+			for (Commit A : Arr) {
+				if (A.ID.equals(G.ID)) {
+					return G;
+				}
+			}
+			G = G.prevCommit;
+		}
 		return null;
 	}
-	
+
 	/**
-	 * Compare fileName location in commitObj with splitCommitObj, 
-	 * return true if they are the same, false if they are different.
-	 * Return false if the fileName does not exist in either commitObj
-	 * or in splitCommitObj.
+	 * Compare fileName location in commitObj with splitCommitObj, return true
+	 * if they are the same, false if they are different. Return false if the
+	 * fileName does not exist in either commitObj or in splitCommitObj.
+	 * 
 	 * @param fileName
+	 *            name of the file to be compared.
 	 * @param commitObj
+	 *            commit object at the lead of a branch
 	 * @param splitCommitObj
+	 *            the split-point Commit object to the given branch and another
+	 *            branch...
 	 * @return
 	 */
-	public boolean compare(String fileName, Commit commitObj, Commit splitCommitObj ){
-		
-		if(commitObj.fileToLocation.containsKey(fileName) && splitCommitObj.fileToLocation.containsKey(fileName)){
-			return commitObj.fileToLocation.get(fileName).equals(splitCommitObj.fileToLocation.get(fileName));
-		}else{
+	public boolean compare(String fileName, Commit commitObj,
+			Commit splitCommitObj) {
+
+		if (commitObj.fileToLocation.containsKey(fileName)
+				&& splitCommitObj.fileToLocation.containsKey(fileName)) {
+			return commitObj.fileToLocation.get(fileName).equals(
+					splitCommitObj.fileToLocation.get(fileName));
+		} else {
 			return false;
 		}
 	}
-	
-	
-	
-	
-	
+/**
+ * 
+ * @param sArr
+ */
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	void rebase(String sArr[]) {
 		Deserialize();
-
-		this.serialize();
+		Commit givenCommit= BranchToCommitObj.get(sArr[0]);
+		Commit currentCommit= Head;
+		if (!BranchToCommitObj.containsKey(sArr[0])) {
+			System.out.println("A branch with that name does not exist.");
+			
+		} else if (givenCommit.ID.equals(currentCommit.ID)) {
+			System.out.println("Cannot rebase a branch onto itself.");
+			
+		} else if (isInHistory(givenCommit,currentCommit)) {
+			System.out.println("Already up-to-date.");
+			
+		}else if (isInHistory(currentCommit,givenCommit)){ // Special case
+			BranchToCommitObj.put(currentCommit.myBranch,givenCommit);
+			Head=givenCommit;
+		} else {
+			Commit Splitpoint=  getSplitPoint(currentCommit, givenCommit);
+			int countTillSplit= countTillSplit(Splitpoint,currentCommit);
+			int n= countTillSplit;
+			Commit oldCommit=givenCommit;
+			Commit similarCommit=currentCommit;
+		// loop through all the current branch and update and re-link as appropriate...
+			for (int i=0; i<countTillSplit;i++){ 
+				// find the current commit object at similar distance from the split
+				// @ the distance of the new commit from the given commit
+				for (int j=0; j<n;j++){
+					// gives us the  in the current brunch to be copied!
+					similarCommit=similarCommit.prevCommit;  
+				}
+				
+				Commit newCommit = new Commit(similarCommit.Message,oldCommit, CurrentBranch);
+				newCommit.fileToLocation= (HashMap) similarCommit.fileToLocation.clone();
+				// loop through newCommit  fileToLocation hash map and update file with the givenCommit node
+				// if the newCommit has that files similar to the split point...
+				// check if files exist in the given commit before operation.
+				
+				ArrayList<String> allfileNames= new ArrayList<String>();
+				for (Entry<String, String> entry : newCommit.fileToLocation.entrySet()) {
+					String fileName=  entry.getKey();
+					allfileNames.add(fileName);
+					
+					if (Splitpoint.fileToLocation.containsKey(fileName)){
+						if (compare(fileName,newCommit,Splitpoint)){
+							if (oldCommit.fileToLocation.containsKey(fileName)){
+								newCommit.fileToLocation.put(fileName, oldCommit.fileToLocation.get(fileName));
+							}
+						}
+					}
+				}
+				
+				 // if there are files in the given commit(oldCommit) not in the newcommit add them...
+				for (Entry<String, String> entry : oldCommit.fileToLocation.entrySet()) {
+					if (!allfileNames.contains(entry.getKey())){
+						newCommit.fileToLocation.put(entry.getKey(),entry.getValue());
+					}
+				}
+				oldCommit=newCommit; // update for the next loop
+				n--;
+				BranchToCommitObj.put(currentCommit.myBranch,newCommit);
+				Head=newCommit;	
+				// should update the myBranch in the givenBranch after rebase?
+			}	
+		}
+		serialize();
 	}
 
-	@SuppressWarnings("unchecked")
-	public static void main(String[] args) {
-		// System.out.println(args[0]);
-		// System.out.println(args[1]);
-		Gitlet G = new Gitlet();
-		String[] arr = {"init", "add", "commit", "rm", "log", "global-log", "find", "status", "checkout", "branch", "rm-branch", "reset", "merge", "rebase"};
-		ArrayList<String> commandList = new ArrayList<String>();
-		for(String e:arr){
-			commandList.add(e);
+	/**
+	 * finds out if the given commit object is in the branch of the current
+	 * Head.
+	 * 
+	 * @param givenCommit
+	 *             the commit object we want to check if it is in the Branch
+	 *             lead by the given branchLead      
+	 * @param branchLead
+	 * 				the commit object that is a lead to a branch  
+	 */
+	boolean isInHistory(Commit givenCommit, Commit branchLead) {
+		Commit C = branchLead;
+		while (C != null) {
+			if (C.ID.equals(givenCommit.ID)) {
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	/**
+	 * given the split-point commit an a branchLead commit it returns the number
+	 * of commit nodes before we reach the lead
+	 * @param Splitpoint 
+	 *            split-point to the given branchLead branch and another branch
+	 * @param branchLead
+	 *             a lead to a branch with a split
+	 */
+
+	int countTillSplit(Commit Splitpoint, Commit branchLead){
+		int count=0;
+		while(!branchLead.ID.equals(Splitpoint.ID)){
+			count++;
+			branchLead=branchLead.prevCommit;
 		}
 		
-		if (!conflicted){
+		return count;
+	}
+	
+	
+	@SuppressWarnings("unchecked")
+	public static void main(String[] args) {
+		
+		Gitlet G = new Gitlet();
+		String[] arr = { "init", "add", "commit", "rm", "log", "global-log",
+				"find", "status", "checkout", "branch", "rm-branch", "reset",
+				"merge", "rebase" };
+		ArrayList<String> commandList = new ArrayList<String>();
+		for (String e : arr) {
+			commandList.add(e);
+		}
+
+		if (!conflicted) {
 			int length = args.length;
 			// System.out.println(args[1].toString());
 			if (length == 0) {
@@ -586,7 +688,7 @@ public class Gitlet {
 
 			}
 
-			else if (length > 1 ) {
+			else if (length > 1) {
 				if (args[0].equals("add")) {
 					G.add(Arrays.copyOfRange(args, 1, length));
 
@@ -594,11 +696,9 @@ public class Gitlet {
 
 				else if (args[0].equals("commit")) {
 					G.commit(Arrays.copyOfRange(args, 1, length));
-				}
-				else if (args[0].equals("reset")) {
+				} else if (args[0].equals("reset")) {
 					G.reset(Arrays.copyOfRange(args, 1, length));
-				}
-				else if (args[0].equals("rm")) {
+				} else if (args[0].equals("rm")) {
 					G.rm(Arrays.copyOfRange(args, 1, length));
 				}
 
@@ -619,7 +719,6 @@ public class Gitlet {
 				else if (args[0].equals("merge")) {
 					G.merge(Arrays.copyOfRange(args, 1, length));
 
-
 				}
 
 				else if (args[0].equals("rebase")) {
@@ -633,7 +732,7 @@ public class Gitlet {
 			else
 				System.out.println("No command with that name exists.");
 
-		}else{
+		} else {
 			int length = args.length;
 			// System.out.println(args[1].toString());
 			if (length == 0) {
@@ -641,8 +740,7 @@ public class Gitlet {
 			} else if (length == 1) {
 				if (args[0].equals("log")) {
 					G.log();
-				}
-				else if (args[0].equals("global-log")) {
+				} else if (args[0].equals("global-log")) {
 					G.global_log();
 				} else if (args[0].equals("status")) {
 					G.status();
@@ -654,7 +752,7 @@ public class Gitlet {
 
 			}
 
-			else if (length > 1 ) {
+			else if (length > 1) {
 				if (args[0].equals("add")) {
 					G.add(Arrays.copyOfRange(args, 1, length));
 
@@ -676,15 +774,14 @@ public class Gitlet {
 					G.checkout(Arrays.copyOfRange(args, 1, length));
 				}
 
-
-				else if ( commandList.contains(args[0]) ){
-					System.out.println("Cannot do this command until the merge conflict has been resolved.");
-				}else{	
+				else if (commandList.contains(args[0])) {
+					System.out
+							.println("Cannot do this command until the merge conflict has been resolved.");
+				} else {
 					System.out.println("No command with that name exists.");
 				}
 
 			}
-
 
 		}
 	}
