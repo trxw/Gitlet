@@ -1,11 +1,10 @@
-
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
+import java.util.*;
 import java.util.Map.Entry;
 
 public class Gitlet {
+	static boolean conflicted;
+	static boolean deserialized;
 	String CurrentBranch;
 	String BS = "/";
 	String OS = "/";
@@ -49,11 +48,12 @@ public class Gitlet {
 		markedForRM = new ArrayList<String>();
 		markedForADD = new ArrayList<String>();
 		io = new IOManagement();
-
+		conflicted = false;
+		deserialized = false;
 	}
 
 	void init() {
-		
+
 		File myfile = new File(io.currentDir + io.GITLETDIR);
 		if (!myfile.exists()) {
 			if (myfile.mkdir()) {
@@ -61,14 +61,16 @@ public class Gitlet {
 						+ io.COMMITDIR);
 				myfile2.mkdir();
 
-				File myfile3 = new File(io.currentDir + io.GITLETDIR + io.STAGEDIR);
+				File myfile3 = new File(io.currentDir + io.GITLETDIR
+						+ io.STAGEDIR);
 				myfile3.mkdir();
 
-				File myfile4 = new File(io.currentDir + io.GITLETDIR + io.METADIR);
+				File myfile4 = new File(io.currentDir + io.GITLETDIR
+						+ io.METADIR);
 				myfile4.mkdir(); // put all the the Serialize objects here!
 
 				String Message = "initial commit";
-				CurrentBranch= "master";
+				CurrentBranch = "master";
 				Commit firstCommit = new Commit(Message, "master");
 				this.Head = firstCommit;
 
@@ -88,11 +90,10 @@ public class Gitlet {
 				// we need to Serialize after all methods is executed
 				this.serialize();
 
-			}else{
-				System.out
-				.println("failed to make DIR");
+			} else {
+				System.out.println("failed to make DIR");
 			}
-			
+
 		} else {
 
 			System.out
@@ -104,7 +105,7 @@ public class Gitlet {
 
 	boolean serialize() {
 		try {
-			
+
 			this.io.serialize(this.MessageToID, "MessageToID");
 			this.io.serialize(this.BranchToCommitObj, "BranchToCommitObj");
 			this.io.serialize(this.IdToCommitObj, "IdToCommitObj");
@@ -113,6 +114,7 @@ public class Gitlet {
 			this.io.serialize(this.markedForADD, "markedForADD");
 			this.io.serialize(this.Head, "Head");
 			this.io.serialize(this.CurrentBranch, "CurrentBranch");
+			this.io.serialize(conflicted, "conflucted");
 			return true;
 		} catch (IllegalStateException e) {
 			return false;
@@ -122,33 +124,37 @@ public class Gitlet {
 
 	@SuppressWarnings("unchecked")
 	void Deserialize() {
-		MessageToID = (HashMap<String, ArrayList<String>>) this.io
-				.deserialize("MessageToID");
-		BranchToCommitObj = (HashMap<String, Commit>) this.io
-				.deserialize("BranchToCommitObj");
-		IdToCommitObj = (HashMap<String, Commit>) this.io
-				.deserialize("IdToCommitObj");
-		SplitPoints = (ArrayList<Commit>) this.io.deserialize("SplitPoints");
-		markedForRM = (ArrayList<String>) this.io.deserialize("markedForRM");
-		markedForADD = (ArrayList<String>) this.io.deserialize("markedForADD");
-		Head = (Commit) this.io.deserialize("Head");
-		CurrentBranch=  (String) this.io.deserialize("CurrentBranch");
+		if(!deserialized){
+			MessageToID = (HashMap<String, ArrayList<String>>) this.io
+					.deserialize("MessageToID");
+			BranchToCommitObj = (HashMap<String, Commit>) this.io
+					.deserialize("BranchToCommitObj");
+			IdToCommitObj = (HashMap<String, Commit>) this.io
+					.deserialize("IdToCommitObj");
+			SplitPoints = (ArrayList<Commit>) this.io.deserialize("SplitPoints");
+			markedForRM = (ArrayList<String>) this.io.deserialize("markedForRM");
+			markedForADD = (ArrayList<String>) this.io.deserialize("markedForADD");
+			Head = (Commit) this.io.deserialize("Head");
+			CurrentBranch = (String) this.io.deserialize("CurrentBranch");
+			conflicted = (boolean) io.deserialize("conflicted");
+			deserialized = true;
+		}
 	}
 
 	void add(String sArr[]) {
 		Deserialize();
 		/*
 		 * If the file had been marked for untracking (more on this in the
-		 * description of the 	command), then add just unmarks the file, and
-		 * also adds it to the staging area.
+		 * description of the command), then add just unmarks the file, and also
+		 * adds it to the staging area.
 		 */
 		String filename = sArr[0];
-		
-//		String getToGitlet = io.currentDir + io.GITLETDIR;
+
+		// String getToGitlet = io.currentDir + io.GITLETDIR;
 		String getToGitlet = io.currentDir;
-		
+
 		File myfile = new File(getToGitlet + BS + filename);
-		
+
 		if (!myfile.exists()) { // if file does not exist
 			System.out.println("File does not exist.");
 		} else if (markedForRM != null) {
@@ -160,8 +166,8 @@ public class Gitlet {
 				if (!markedForADD.contains(filename)) {
 					markedForADD.add(filename);
 				}
-				io.save(getToGitlet + BS + filename, io.currentDir + io.GITLETDIR + io.STAGEDIR
-						+ BS + filename);
+				io.save(getToGitlet + BS + filename, io.currentDir
+						+ io.GITLETDIR + io.STAGEDIR + BS + filename);
 				this.serialize();
 			}
 		} else {
@@ -174,6 +180,13 @@ public class Gitlet {
 		}
 
 	}
+	
+	
+	
+	
+	
+	
+	
 
 	void commit(String sArr[]) {
 		Deserialize();
@@ -183,7 +196,7 @@ public class Gitlet {
 		} else {
 			// head should be pointing at the current commit at all times...
 
-			Commit newCommit = new Commit(sArr[0], Head, Head.myBranch);
+			Commit newCommit = new Commit(sArr[0], Head, CurrentBranch);
 			if (!this.markedForADD.isEmpty()) { // files to be committed
 				for (String filetoadd : markedForADD) {
 					newCommit.CommitFromStaging(filetoadd);
@@ -208,7 +221,8 @@ public class Gitlet {
 				this.MessageToID.put(newCommit.Message, arr);
 			}
 			this.IdToCommitObj.put(newCommit.ID, newCommit);
-			this.BranchToCommitObj.put(Head.myBranch, newCommit); // advance-the-pointer
+			this.BranchToCommitObj.put(CurrentBranch, newCommit); // advance-the-pointer
+
 			Head = newCommit;
 			// check if all the staged files are cleared and if RM is emptied
 			if (!this.markedForADD.isEmpty() || !this.markedForRM.isEmpty()) {
@@ -219,22 +233,29 @@ public class Gitlet {
 		this.serialize();
 	}
 
-	void reset(String[] sArr){
-		if(IdToCommitObj.containsKey(sArr[0])  ){
-			for (Entry<String, String> entry : IdToCommitObj.get(sArr[0]).fileToLocation.entrySet()) {
-         		String S= io.currentDir+io.GITLETDIR+io.COMMITDIR+BS+entry.getValue()+BS+entry.getKey();
-				io.save(S, io.currentDir);
-				
+	void reset(String[] sArr) {
+		Deserialize();
+
+		if (IdToCommitObj.containsKey(sArr[0])) {
+			for (Entry<String, String> entry : IdToCommitObj.get(sArr[0]).fileToLocation
+					.entrySet()) {
+				String S = io.currentDir + io.GITLETDIR + io.COMMITDIR + BS
+						+ entry.getValue() + BS + entry.getKey();
+				io.save(S,
+						io.currentDir + BS + entry.getValue() + BS
+								+ entry.getKey());
+
 			}
-			Head= IdToCommitObj.get(sArr[0]);
-		}
-		else{
+			Head = IdToCommitObj.get(sArr[0]);
+			CurrentBranch = Head.myBranch;
+
+		} else {
 			System.out.println("No commit with that id exists.");
 		}
-		
+
+		serialize();
 	}
-	
-	
+
 	void rm(String sArr[]) {
 		Deserialize();
 		String fileName = sArr[0];
@@ -302,7 +323,7 @@ public class Gitlet {
 		Deserialize();
 		System.out.println("=== Branches ===");
 		for (Entry<String, Commit> entry : BranchToCommitObj.entrySet()) {
-			if (entry.getKey().equals(Head.myBranch)) {
+			if (entry.getKey().equals(CurrentBranch)) {
 				System.out.println("*" + entry.getKey()); // * on current
 															// branch!
 			} else {
@@ -326,9 +347,13 @@ public class Gitlet {
 	void branch(String sArr[]) {
 
 		Deserialize();
-		
+
 		if (!BranchToCommitObj.containsKey(sArr[0])) {
 			BranchToCommitObj.put(sArr[0], Head);
+
+			this.SplitPoints.add(Head);
+			Head.isSplitPoint = true;
+
 		} else {
 			System.out.println("A branch with that name already exists.");
 		}
@@ -349,29 +374,31 @@ public class Gitlet {
 
 	void checkout(String sArr[]) {
 		Deserialize();
-		String grabFrom= io.currentDir+io.GITLETDIR+io.COMMITDIR;
-		
-//		String putIn= io.currentDir+io.GITLETDIR;
-		String putIn= io.currentDir;
-		
+		String grabFrom = io.currentDir + io.GITLETDIR + io.COMMITDIR;
+
+		// String putIn= io.currentDir+io.GITLETDIR;
+		String putIn = io.currentDir;
+
 		if (sArr.length == 1) { // it-means-that-sArr[0] is [Branch name] or
 								// [file-name]
-			if (BranchToCommitObj.containsKey(sArr[0])) { // it must be a-[Branch]
-				
+			if (BranchToCommitObj.containsKey(sArr[0])) { // it must be
+															// a-[Branch]
+
 				if (sArr[0].equals(CurrentBranch)) {
 					System.out
 							.println("No need to checkout the current branch.");
 				} else {
 					// entry.getValue() is the location of the files (i.e. the
 					// branch commit file location)
-					
+
 					// loop to place all files in to the current-directory...
 					for (Entry<String, String> entry : BranchToCommitObj
 							.get(sArr[0]).fileToLocation.entrySet()) {
-						io.save(grabFrom +BS+entry.getValue() + BS + entry.getKey(), putIn+ BS + entry.getKey());
+						io.save(grabFrom + BS + entry.getValue() + BS
+								+ entry.getKey(), putIn + BS + entry.getKey());
 					}
 					Head = BranchToCommitObj.get(sArr[0]);
-					CurrentBranch= Head.myBranch;
+					CurrentBranch = sArr[0];
 				}
 			} else { // sArr[0] is [Files name]
 				if (!Head.fileToLocation.containsKey(sArr[0])) { // it-is-neither
@@ -380,9 +407,9 @@ public class Gitlet {
 				} else {
 					// grab the file from the commit Dir. to the current Dir.
 					// System.out.println("This is not a problem:"+Head.fileToLocation.get(sArr[0]));
-					
-					
-					io.save(grabFrom+BS+Head.ID+BS+sArr[0],putIn+BS+sArr[0]);
+
+					io.save(grabFrom + BS + Head.fileToLocation.get(sArr[0])
+							+ BS + sArr[0], putIn + BS + sArr[0]);
 				}
 			}
 
@@ -394,7 +421,12 @@ public class Gitlet {
 					.containsKey(sArr[1])) {
 				System.out.println("File does not exist in that commit.");
 			} else { // file exists in the Commit dir.
-				io.save(grabFrom+BS+sArr[0]+BS+sArr[1],putIn+BS+sArr[1]);
+
+				io.save(grabFrom
+						+ BS
+						+ IdToCommitObj.get(sArr[0]).fileToLocation
+								.get(sArr[1]) + BS + sArr[1], putIn + BS
+						+ sArr[1]);
 			}
 		}
 
@@ -404,11 +436,115 @@ public class Gitlet {
 
 	void merge(String sArr[]) {
 		Deserialize();
+		
+		if(!BranchToCommitObj.containsKey(sArr[0])){
+			System.out.println("A branch with that name does not exist.");
+		}
+		else if(BranchToCommitObj.get(sArr[0]).ID.equals(Head.ID) ){
+			System.out.println("Cannot merge a branch with itself.");
+		}
+		else{
+			//Obtain the union of set of files associated with the Head and last commit of given branch
+			Set<String> allFiles = new HashSet<String>();
+			allFiles.addAll( BranchToCommitObj.get(sArr[0]).fileToLocation.keySet() );
+			allFiles.addAll( Head.fileToLocation.keySet() );
+			Commit splitPoint = getSplitPoint(BranchToCommitObj.get(sArr[0]), Head);
+			
+			//Loop through all the files:
+			for(String fileName: allFiles){
 
+				if(!compare(fileName, BranchToCommitObj.get(sArr[0]), splitPoint ) && 
+						compare(fileName, Head, splitPoint )){
+					//replace the file in the current branch with file in given branch
+					
+					
+				}else if(!compare(fileName, BranchToCommitObj.get(sArr[0]), splitPoint ) && 
+						!compare(fileName, Head, splitPoint )){
+						conflicted = true;
+						//copy the file from given branch after adding ".confliced" to file name. 
+						
+				}
+					
+				
+				
+			}
+			
+			String mergeMessage;
+			if(!conflicted){
+				mergeMessage =  "Merged "+CurrentBranch+" with "+sArr[0];
+				Head = new Commit(mergeMessage, Head, CurrentBranch);
+			}else{
+				System.out.println("Encountered a merge conflict.");
+			}
+
+			
+			
+		}
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
 		this.serialize();
 
 	}
 
+	
+	
+	/**
+	 * 
+	 * @param currentCommit
+	 * @param givenCommit
+	 * @return
+	 */
+	public Commit getSplitPoint(Commit currentCommit, Commit givenCommit){
+		
+		
+		return null;
+	}
+	
+	/**
+	 * Compare fileName location in commitObj with splitCommitObj, 
+	 * return true if they are the same, false if they are different.
+	 * Return false if the fileName does not exist in either commitObj
+	 * or in splitCommitObj.
+	 * @param fileName
+	 * @param commitObj
+	 * @param splitCommitObj
+	 * @return
+	 */
+	public boolean compare(String fileName, Commit commitObj, Commit splitCommitObj ){
+		
+		if(commitObj.fileToLocation.containsKey(fileName) && splitCommitObj.fileToLocation.containsKey(fileName)){
+			return commitObj.fileToLocation.get(fileName).equals(splitCommitObj.fileToLocation.get(fileName));
+		}else{
+			return false;
+		}
+	}
+	
+	
+	
+	
+	
 	void rebase(String sArr[]) {
 		Deserialize();
 
@@ -420,74 +556,136 @@ public class Gitlet {
 		// System.out.println(args[0]);
 		// System.out.println(args[1]);
 		Gitlet G = new Gitlet();
+		String[] arr = {"init", "add", "commit", "rm", "log", "global-log", "find", "status", "checkout", "branch", "rm-branch", "reset", "merge", "rebase"};
+		ArrayList<String> commandList = new ArrayList<String>();
+		for(String e:arr){
+			commandList.add(e);
+		}
+		
+		if (!conflicted){
+			int length = args.length;
+			// System.out.println(args[1].toString());
+			if (length == 0) {
+				System.out.println("Please enter a command.");
+			} else if (length == 1) {
+				if ((args[0].equals("init"))) {
+					G.init();
+				} else if (args[0].equals("log")) {
+					G.log();
+				}
 
-		int length = args.length;
-		// System.out.println(args[1].toString());
-		if (length == 0) {
-			System.out.println("Please enter a command.");
-		} else if (length == 1) {
-			if ((args[0].equals("init"))) {
-				G.init();
-			} else if (args[0].equals("log")) {
-				G.log();
+				else if (args[0].equals("global-log")) {
+					G.global_log();
+				} else if (args[0].equals("status")) {
+					G.status();
+				} else if (args[0].equals("commit")) {
+					System.out.println("Please enter a commit message.");
+				} else {
+					System.out.println("No command with that name exists.");
+				}
+
 			}
 
-			else if (args[0].equals("global-log")) {
-				G.global_log();
-			} else if (args[0].equals("status")) {
-				G.status();
-			} else if (args[0].equals("commit")) {
-				System.out.println("Please enter a commit message.");
-			} else {
+			else if (length > 1 ) {
+				if (args[0].equals("add")) {
+					G.add(Arrays.copyOfRange(args, 1, length));
+
+				}
+
+				else if (args[0].equals("commit")) {
+					G.commit(Arrays.copyOfRange(args, 1, length));
+				}
+				else if (args[0].equals("reset")) {
+					G.reset(Arrays.copyOfRange(args, 1, length));
+				}
+				else if (args[0].equals("rm")) {
+					G.rm(Arrays.copyOfRange(args, 1, length));
+				}
+
+				else if (args[0].equals("find")) {
+					G.find(Arrays.copyOfRange(args, 1, length));
+				}
+
+				else if (args[0].equals("checkout")) {
+					G.checkout(Arrays.copyOfRange(args, 1, length));
+				}
+
+				else if (args[0].equals("branch")) {
+					G.branch(Arrays.copyOfRange(args, 1, length));
+				} else if (args[0].equals("rm-branch")) {
+					G.rmbranch(Arrays.copyOfRange(args, 1, length));
+				}
+
+				else if (args[0].equals("merge")) {
+					G.merge(Arrays.copyOfRange(args, 1, length));
+
+
+				}
+
+				else if (args[0].equals("rebase")) {
+					G.rebase(Arrays.copyOfRange(args, 1, length));
+				} else {
+					System.out.println("No command with that name exists.");
+				}
+
+			}
+
+			else
 				System.out.println("No command with that name exists.");
+
+		}else{
+			int length = args.length;
+			// System.out.println(args[1].toString());
+			if (length == 0) {
+				System.out.println("Please enter a command.");
+			} else if (length == 1) {
+				if (args[0].equals("log")) {
+					G.log();
+				}
+				else if (args[0].equals("global-log")) {
+					G.global_log();
+				} else if (args[0].equals("status")) {
+					G.status();
+				} else if (args[0].equals("commit")) {
+					System.out.println("Please enter a commit message.");
+				} else {
+					System.out.println("No command with that name exists.");
+				}
+
 			}
+
+			else if (length > 1 ) {
+				if (args[0].equals("add")) {
+					G.add(Arrays.copyOfRange(args, 1, length));
+
+				}
+
+				else if (args[0].equals("commit")) {
+					G.commit(Arrays.copyOfRange(args, 1, length));
+				}
+
+				else if (args[0].equals("rm")) {
+					G.rm(Arrays.copyOfRange(args, 1, length));
+				}
+
+				else if (args[0].equals("find")) {
+					G.find(Arrays.copyOfRange(args, 1, length));
+				}
+
+				else if (args[0].equals("checkout")) {
+					G.checkout(Arrays.copyOfRange(args, 1, length));
+				}
+
+
+				else if ( commandList.contains(args[0]) ){
+					System.out.println("Cannot do this command until the merge conflict has been resolved.");
+				}else{	
+					System.out.println("No command with that name exists.");
+				}
+
+			}
+
 
 		}
-
-		else if (length > 1) {
-			if (args[0].equals("add")) {
-				G.add(Arrays.copyOfRange(args, 1, length));
-
-			}
-
-			else if (args[0].equals("commit")) {
-				G.commit(Arrays.copyOfRange(args, 1, length));
-			}
-			else if (args[0].equals("reset")) {
-				G.reset(Arrays.copyOfRange(args, 1, length));
-			}
-			else if (args[0].equals("rm")) {
-				G.rm(Arrays.copyOfRange(args, 1, length));
-			}
-
-			else if (args[0].equals("find")) {
-				G.find(Arrays.copyOfRange(args, 1, length));
-			}
-
-			else if (args[0].equals("checkout")) {
-				G.checkout(Arrays.copyOfRange(args, 1, length));
-			}
-
-			else if (args[0].equals("branch")) {
-				G.branch(Arrays.copyOfRange(args, 1, length));
-			} else if (args[0].equals("rm-branch")) {
-				G.rmbranch(Arrays.copyOfRange(args, 1, length));
-			}
-
-			else if (args[0].equals("merge")) {
-				G.merge(Arrays.copyOfRange(args, 1, length));
-			}
-
-			else if (args[0].equals("rebase")) {
-				G.rebase(Arrays.copyOfRange(args, 1, length));
-			} else {
-				System.out.println("No command with that name exists.");
-			}
-
-		}
-
-		else
-			System.out.println("No command with that name exists.");
 	}
-
 }
