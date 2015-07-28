@@ -1,23 +1,31 @@
-
-
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.io.*;
 
 public class Commit implements Serializable {
-	// commit must track its parents files not copy them...
-	// if the file is
-	String OS = "/";
-	String BS = "/";
-
+	// BS and OS are used to to convert from windows and Linux use
+	String OS = "\\";
+	String BS = "\\";
+	/**
+	 * hash map that keeps track of the fileName as key and the location of
+	 * where the files is save as the value tracked by this commit
+	 */
 	HashMap<String, String> fileToLocation;
-	boolean isSplitPoint; // true if it is a split point else false
-	String ID; // contains the Id of the commit object
+
+	// true if it is a split point else false
+	boolean isSplitPoint;
+
+	// contains the Id of the commit object
+	String ID;
+	// contains the the Commit message
 	String Message;
-	String Time; // string that keeps track of the commit time for this node
+	// string that keeps track of the commit time for this commit node
+	String Time;
+	// a commit reference the the previous commit
 	Commit prevCommit;
-	public String myBranch; // keeps track of what branch this commit is on //
-							// should be updated during merge
+	// keeps track of what branch this commit is on //
+	// should be updated during merge
+	public String myBranch;
 
 	public Commit(String Mess, String branchname) {
 		fileToLocation = new HashMap<String, String>();
@@ -39,7 +47,7 @@ public class Commit implements Serializable {
 		Time = sdf.format(time);
 
 		// display time and date using toString()
-		//Time = time.toString();
+		// Time = time.toString();
 		ID = UUID.randomUUID().toString();
 		Message = Mess;
 		prevCommit = parentCommit;
@@ -47,51 +55,38 @@ public class Commit implements Serializable {
 		fileToLocation = (HashMap) parentCommit.fileToLocation.clone();
 	}
 
-	/*
+	/**
 	 * the method will add staged files to commit file and delete the file from
 	 * the staging area
 	 * 
-	 * fileToLocation is automatically set same as its parents it is updated if
-	 * the stage file updated the file if no file exists by that name in the
-	 * parent we add to the kid I don't need
-	 * 
-	 * No Need to check if the parent has the file or not since put would
-	 * replace it
+	 * @param fileName
+	 *            this is the file name to be added to the commit directory and
+	 *            deleted from the staging area
 	 */
 	public void CommitFromStaging(String fileName) {
-		
+
 		IOManagement io = new IOManagement();
-		
-		// where files are going
-		String targetDir =io.currentDir+io.GITLETDIR + io.COMMITDIR + OS +ID+OS+fileName;
-		// where files are coming from
-		String grabFromDir= io.currentDir+io.GITLETDIR+ io.STAGEDIR+OS+fileName;
-		
-		
-		// add the file and the name of the files Dir. inside of commit Dir.
-		fileToLocation.put(fileName,ID);
-		//create the file for this particular commit inside of the commit dIR
-		File myCommitDir = new File(io.currentDir+io.GITLETDIR + io.COMMITDIR + OS +ID);
+		String targetDir = io.currentDir + io.GITLETDIR + io.COMMITDIR + OS
+				+ ID + OS + fileName;
+		String grabFromDir = io.currentDir + io.GITLETDIR + io.STAGEDIR + OS
+				+ fileName;
+		fileToLocation.put(fileName, ID);
+		File myCommitDir = new File(io.currentDir + io.GITLETDIR + io.COMMITDIR
+				+ OS + ID);
 		myCommitDir.mkdir();
-
-		io.save(grabFromDir,targetDir);
-
-		// remove the file from the staging area after putting a copy in the
-		// commit DIR
-
-		io.Delete(io.currentDir+io.GITLETDIR+ io.STAGEDIR,fileName);
+		io.save(grabFromDir, targetDir);
+		io.Delete(io.currentDir + io.GITLETDIR + io.STAGEDIR, fileName);
 	}
 
-	// un-track all files tracked by the parent and marked for RM
+	/**
+	 * un-track all files tracked by the parent and marked for RM
+	 * 
+	 * @param fileName
+	 *            name of files that this commit stops tracking
+	 */
 	public void CommitRM(String fileName) {
-		if (fileToLocation.containsKey(fileName)) { // if tracked by the parent
-													// un-track
-			// file is not removed from commit file just from the tracking by
-			// the new commit
+		if (fileToLocation.containsKey(fileName)) {
 			fileToLocation.remove(fileName);
-
 		}
-		// if not tracked by the parent ignore it...
 	}
-
 }
