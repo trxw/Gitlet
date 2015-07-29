@@ -166,15 +166,9 @@ public class Gitlet {
 			SplitPoints = (ArrayList<Commit>) this.io
 					.deserialize("SplitPoints");
 			markedForRM = (ArrayList<String>) this.io
-<<<<<<< HEAD
 					.deserialize("markedForRM"+CurrentBranch);
 			markedForADD = (ArrayList<String>) this.io
 					.deserialize("markedForADD"+CurrentBranch);
-=======
-					.deserialize("markedForRM");
-			markedForADD = (ArrayList<String>) this.io
-					.deserialize("markedForADD");
->>>>>>> dffa0461e4d6a025c06562913b2be518308958b1
 			Head = (Commit) this.io.deserialize("Head");
 			
 			conflicted = (boolean) io.deserialize("conflicted");
@@ -191,10 +185,6 @@ public class Gitlet {
 	 */
 	void add(String sArr[]) {
 		Deserialize();
-<<<<<<< HEAD
-=======
-
->>>>>>> dffa0461e4d6a025c06562913b2be518308958b1
 		String filename = sArr[0];
 		String getToGitlet = io.currentDir;
 
@@ -331,10 +321,7 @@ public class Gitlet {
 		String fileName = sArr[0];
 		if (markedForADD.contains(fileName)
 				|| Head.fileToLocation.containsKey(fileName)) {
-<<<<<<< HEAD
 			
-=======
->>>>>>> dffa0461e4d6a025c06562913b2be518308958b1
 			if (markedForADD.contains(fileName)) {
 				markedForADD.remove(fileName);
 				String grabFromDir = io.currentDir + io.GITLETDIR + io.STAGEDIR;
@@ -571,7 +558,6 @@ public class Gitlet {
 			allFiles.addAll(Head.fileToLocation.keySet());
 			Commit splitPoint = getSplitPoint(BranchToCommitObj.get(sArr[0]),
 					Head);
-<<<<<<< HEAD
 			System.out.println("Splitpoint"+splitPoint.ID);
 			// Loop through all the files:
 			for (String fileName : allFiles) {
@@ -581,25 +567,11 @@ public class Gitlet {
 					if (!markedForRM.contains(fileName)) {
 						io.save(io.currentDir + io.GITLETDIR + io.COMMITDIR
 								+ BS+ BranchToCommitObj.get(sArr[0]).fileToLocation.get(fileName)
-								+ BS+ fileName, io.currentDir + fileName
+								+ BS+ fileName, io.currentDir + BS+fileName
 								+ ".conflicted");
 						// Add the file to staging directory
 						String[] fileNameArr = { fileName };
 						add(fileNameArr);
-=======
-			// Loop through all the files:
-			for (String fileName : allFiles) {
-
-				if (!compare(fileName, BranchToCommitObj.get(sArr[0]),
-						splitPoint) && compare(fileName, Head, splitPoint)) {
-					if (!markedForRM.contains(fileName)) {
-						// Checkout
-						String[] checkoutSArr = { fileName,
-								BranchToCommitObj.get(sArr[0]).ID };
-						checkout(checkoutSArr);
-						// Add the file to staging directory
-						add(new String[] { fileName });
->>>>>>> dffa0461e4d6a025c06562913b2be518308958b1
 					} else if (markedForADD.contains(fileName)) {
 						markedForADD.remove(fileName);
 					}
@@ -610,7 +582,6 @@ public class Gitlet {
 					// copy the file from given branch after adding ".confliced"
 					// to file name.
 					io.save(io.currentDir + io.GITLETDIR + io.COMMITDIR
-<<<<<<< HEAD
 							+ BS+ BranchToCommitObj.get(sArr[0]).fileToLocation.get(fileName)
 							+ BS+ fileName, io.currentDir + fileName
 							+ ".conflicted");
@@ -619,14 +590,6 @@ public class Gitlet {
 				}
 			}
 
-=======
-							+ BranchToCommitObj.get(sArr[0]).fileToLocation
-							+ fileName, io.currentDir + fileName
-							+ ".conflicted");
-					add(new String[] { fileName + ".conflicted" });
-				}
-			}
->>>>>>> dffa0461e4d6a025c06562913b2be518308958b1
 			if (!conflicted) {
 				String[] mergeMessage = { "Merged " + CurrentBranch + " with "
 						+ sArr[0] };
@@ -738,10 +701,7 @@ public class Gitlet {
 		} else {
 			
 			Commit Splitpoint = getSplitPoint(currentCommit, givenCommit);
-<<<<<<< HEAD
 			
-=======
->>>>>>> dffa0461e4d6a025c06562913b2be518308958b1
 			int countTillSplit = countTillSplit(Splitpoint, currentCommit);
 			int n = countTillSplit;
 			Commit oldCommit = givenCommit;
