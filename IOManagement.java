@@ -12,8 +12,8 @@ import static java.nio.file.StandardCopyOption.*;
 
 public class IOManagement implements Serializable {
 	// BS and OS are used to to convert from windows and Linux use
-	String BS = "\\";
-	String OS = "\\";
+	String BS = "/";
+	String OS = "/";
 	// this is used the refer to .gitlet directory from the working
 	// directory
 	String GITLETDIR = BS + ".gitlet";

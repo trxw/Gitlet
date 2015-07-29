@@ -13,8 +13,8 @@ public class Gitlet {
 	String CurrentBranch;
 
 	// BS and OS are used to to convert from windows and Linux use
-	String BS = "\\";
-	String OS = "\\";
+	String BS = "/";
+	String OS = "/";
 
 	// keeps track of the current commit object
 	public Commit Head;
@@ -495,9 +495,6 @@ public class Gitlet {
 				} else {
 					for (Entry<String, String> entry : BranchToCommitObj
 							.get(sArr[0]).fileToLocation.entrySet()) {
-						System.out.println(grabFrom + BS + entry.getValue() + BS
-								+ entry.getKey());
-						System.out.println(putIn + BS + entry.getKey());
 						io.save(grabFrom + BS + entry.getValue() + BS
 								+ entry.getKey(), putIn + BS + entry.getKey());
 					}
@@ -619,11 +616,12 @@ public class Gitlet {
 		Commit G = givenCommit;
 		ArrayList<Commit> Arr = new ArrayList<Commit>();
 		int Count = 0;
+		boolean V = false;
 		while (C != null && Count < SplitPoints.size()) {
 			for(Commit C1: SplitPoints){
 				if (C1.ID.equals(C.ID))
 					Arr.add(C1);
-				
+				System.out.println(Arr.add(C1));
 				Count++;
 			}
 			C = C.prevCommit;
@@ -698,19 +696,13 @@ public class Gitlet {
 		} else {
 			
 			Commit Splitpoint = getSplitPoint(currentCommit, givenCommit);
-			System.out.println(Splitpoint.ID);
 			int countTillSplit = countTillSplit(Splitpoint, currentCommit);
 			int n = countTillSplit;
 			Commit oldCommit = givenCommit;
 			Commit similarCommit = currentCommit;
-			// loop through all the current branch and update and re-link as
-			// appropriate...
 			for (int i = 0; i < countTillSplit; i++) {
-				// find the current commit object at similar distance from the
-				// split
-				// @ the distance of the new commit from the given commit
-				for (int j = 0; j < n; j++) {
-					// gives us the in the current brunch to be copied!
+				for (int j = 0; j < n-1; j++) {
+					// gives us the the current brunch to be copied!
 					similarCommit = similarCommit.prevCommit;
 				}
 
@@ -718,10 +710,6 @@ public class Gitlet {
 						CurrentBranch);
 				newCommit.fileToLocation = (HashMap) similarCommit.fileToLocation
 						.clone();
-				// loop through newCommit fileToLocation hash map and update
-				// file with the givenCommit node
-				// if the newCommit has that files similar to the split point...
-				// check if files exist in the given commit before operation.
 
 				ArrayList<String> allfileNames = new ArrayList<String>();
 				for (Entry<String, String> entry : newCommit.fileToLocation
@@ -739,8 +727,6 @@ public class Gitlet {
 					}
 				}
 
-				// if there are files in the given commit(oldCommit) not in the
-				// newcommit add them...
 				for (Entry<String, String> entry : oldCommit.fileToLocation
 						.entrySet()) {
 					if (!allfileNames.contains(entry.getKey())) {
