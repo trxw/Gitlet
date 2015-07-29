@@ -2,10 +2,11 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.io.*;
 
+
 public class Commit implements Serializable {
 	// BS and OS are used to to convert from windows and Linux use
-	String OS = "\\";
-	String BS = "\\";
+	String OS = "/";
+	String BS = "/";
 	/**
 	 * hash map that keeps track of the fileName as key and the location of
 	 * where the files is save as the value tracked by this commit
