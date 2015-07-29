@@ -87,7 +87,7 @@ public class IOManagement implements Serializable {
 		} catch (IOException e) {
 
 		}
-
+		myFile.delete();
 	}
 
 	/**
