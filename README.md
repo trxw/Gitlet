@@ -87,7 +87,3 @@ Gitlet is an implementation of a version-control system. This version-control sy
     * push :- Attempts to append the current branch's commits to the end of the given branch at the given remote
     * fetch :- Brings down commits from the remote gitlet into the local gitlet.
     * pull :- Fetches branch [remote name]/[remote branch name] as for the fetch command, and then merges that fetch into the current branch.
-
-
-## Acknowledgments
-  This project was taken from the cs61bl course from UC Berkeley. You can find the original project description here [cs61bl](https://inst.eecs.berkeley.edu/~cs61b/fa15/hw/proj3/#d-detailed-spec-of-behavior)
